@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "parrotpy"
+version = "0.1.0"
+description = "spark test data generation tool"
+authors = ["Dorren Chen <dorrenchen@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [
+    { include = "parrotpy", from="src" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+faker = ">=37.11.0"
+numpy = ">=2.2.6"
+pyspark = ">=3.5.5"
+
+
+[tool.poetry.group.test.dependencies]
+pytest = "^8.4.2"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+pythonpath = ["src"]
+testpaths = [
+    "tests"
+]
