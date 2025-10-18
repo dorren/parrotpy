@@ -1,6 +1,6 @@
 <img src="docs/images/parrotpy_logo.png" width="300" height="300" />
 
-# Test Data Parrot
+# ParrotPy
 
 ParrotPy is a test/synthetic data generation tool for Spark.
 
