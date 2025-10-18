@@ -1,4 +1,4 @@
-![Parrot logo](docs/images/parrotpy_logo.png)
+<img src="docs/images/parrotpy_logo.png" width="300" height="300" />
 
 # Test Data Parrot
 
