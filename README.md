@@ -39,7 +39,9 @@ df = pr.mimic_df(src_df, spark=spark, n=100)
 # mimic an existing df
 df = pr.mimic_df(src_df, spark=spark, n=100)
 
-# For security or compliance reasons, one may not allowed to generate test data from production data in the same environment. In such case, you can extract the meatadata and save as json file first.
+# For security or compliance reasons, one may not allowed to generate test data 
+# from production data in the same environment. In such case, you can extract 
+# the meatadata and save as json file first.
 
 # mimic in two steps
 metadata = pr.inspect_df(df)    # python dict
