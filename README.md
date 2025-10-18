@@ -1,4 +1,4 @@
-![Parrot logo](docs/images/parrot_white_bg.png)
+![Parrot logo](docs/images/parrotpy_logo.png)
 
 # Test Data Parrot
 
