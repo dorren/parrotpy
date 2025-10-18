@@ -46,7 +46,7 @@ column with categorical data
     "seed": 123
   "columns": [
     {"name": "location",
-     "type": str,
+     "type": "str",
      "choices":["NY", "CA", "OH"],
      "weights":[0.3,  0.3,  0.4],
      "seed": 1234
@@ -61,7 +61,7 @@ column with probability distribution values
     "seed": 123
   "columns": [
     {"name": "scores",
-     "type": double,
+     "type": "float",
      "distribution": "norm",
      "mean": 0,
      "std_dev": 1,
