@@ -25,11 +25,10 @@ df = spark.range(10)
 # create a new column with value in normal distribution
 # with mean=10, and standard deviation = 2.
 new_col = normal(10, 2, to_int=False, seed=42)
-df = df.withColumn(new_col_name, new_col)
+df = df.withColumn("num", new_col)
 
 # create new column with an array of 3 random values 
-new_col = normal(mean=10, sd=2, seed=42)
-df = df.transform(add_random_array, col_name, new_col, 3)
+df = df.transform(add_random_array, "num_arr", new_col, 3)
 
 # mimic an existing df
 df = pr.mimic_df(src_df, spark=spark, n=100)
@@ -43,9 +42,9 @@ df = pr.gen_df(metadata, spark=spark, n=100) # gen 100 rows
 ## Configurations
 column with categorical data
 ```json
-{ metadata:
-    seed: 123
-  columns: [
+{ "metadata":
+    "seed": 123
+  "columns": [
     {"name": "location",
      "type": str,
      "choices":["NY", "CA", "OH"],
@@ -58,9 +57,9 @@ column with categorical data
 
 column with probability distribution values
 ```json
-{ metadata:
-    seed: 123
-  columns: [
+{ "metadata":
+    "seed": 123
+  "columns": [
     {"name": "scores",
      "type": double,
      "distribution": "norm",
