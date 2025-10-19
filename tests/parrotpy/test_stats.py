@@ -1,12 +1,15 @@
+from contextlib import contextmanager
+import numpy as np
 import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
+from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, DoubleType
-
-from parrotpy.stats import normal, add_random_array
-import numpy as np
 import timeit
-from contextlib import contextmanager
+
+from helpers.spark_helpers import spark
+from parrotpy.stats import normal, add_random_array
+
 
 @contextmanager
 def benchmark(name: str):
@@ -14,21 +17,6 @@ def benchmark(name: str):
     yield
     end = timeit.default_timer()
     print(f"[BENCHMARK] {name}: {end - start:.4f} seconds")
-
-@pytest.fixture(scope="module")
-def spark():
-    # py_exe = "C:/Users/dorren/AppData/Local/pypoetry/Cache/virtualenvs/parrotpy-_LyJFcJ7-py3.11/Scripts/python.exe"
-    """Create a Spark session for testing."""
-    spark = (SparkSession.builder    \
-            .master("local[*]")      \
-            .appName("ParrotPy-Test") \
-            .config("spark.sql.execution.pyspark.udf.faulthandler.enabled", "true") \
-            .config("spark.python.worker.faulthandler.enabled", "true") \
-            .getOrCreate())
-    spark.sparkContext.setLogLevel("INFO")
-
-    yield spark
-    spark.stop()
 
 
 def test_normal_distribution(spark):
@@ -50,7 +38,7 @@ def test_normal_distribution(spark):
     
     actual_mean = stats["mean"]
     actual_stddev = stats["stddev"]
-    assert abs(actual_mean/mean - 1) < 0.05,    f"Mean     {actual_mean} not within 5% of expected {mean}"
+    assert abs(actual_mean/mean - 1) < 0.05,    f"Mean {actual_mean} not within 5% of expected {mean}"
     assert abs(actual_stddev/stddev - 1) < 0.1, f"StdDev {actual_stddev} not within 10% of expected {stddev}"
 
 def test_normal_array(spark):
@@ -66,11 +54,11 @@ def test_normal_array(spark):
     with benchmark("Using Spark randn()"):
       df = df.transform(add_random_array, col_name, new_col, array_size)
       rows = df.collect()
-    df.show(3, False)
 
 
 def test_numpy(spark):
-    def generate_numpy_array(mean, sd, size, seed):
+    @udf(returnType=ArrayType(DoubleType()))
+    def gen_numpy_array(mean, sd, size, seed):
         # np.random.seed(seed)
         return np.random.normal(mean, sd, size).tolist()
 
@@ -83,8 +71,6 @@ def test_numpy(spark):
 
     df = spark.range(row_count)
 
-    my_udf = F.udf(generate_numpy_array, ArrayType(DoubleType()))
     with benchmark("Use numpy.random.normal()"):
-      df = df.withColumn(col_name, my_udf(F.lit(mean), F.lit(stddev), F.lit(array_size), F.lit(seed)))
+      df = df.withColumn(col_name, gen_numpy_array(F.lit(mean), F.lit(stddev), F.lit(array_size), F.lit(seed)))
       rows = df.collect()
-    df.show(3, False)

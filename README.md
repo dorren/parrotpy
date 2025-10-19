@@ -2,7 +2,7 @@
 
 # ParrotPy
 
-ParrotPy is a test/synthetic data generation tool for Spark.
+ParrotPy is a test/synthetic data generation tool for [Apache Spark](https://github.com/apache/spark).
 
 # Usage
 
@@ -29,9 +29,6 @@ df = df.withColumn("num", new_col)
 
 # create new column with an array of 3 random values 
 df = df.transform(add_random_array, "num_arr", new_col, 3)
-
-# mimic an existing df
-df = pr.mimic_df(src_df, spark=spark, n=100)
 ```
 
 ## Replicate Production Data
@@ -39,9 +36,9 @@ df = pr.mimic_df(src_df, spark=spark, n=100)
 # mimic an existing df
 df = pr.mimic_df(src_df, spark=spark, n=100)
 
-# For security or compliance reasons, one may not allowed to generate test data 
+# For security or compliance reasons, one may not be allowed to generate test data 
 # from production data in the same environment. In such case, you can extract 
-# the meatadata and save as json file first.
+# the meatadata and save as json file first, then review and modify as needed.
 
 # mimic in two steps
 metadata = pr.inspect_df(df)    # python dict

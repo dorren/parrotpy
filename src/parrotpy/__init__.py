@@ -1,2 +1,3 @@
-def main() -> None:
-    print("Hello from parrotpy!")
+from .main import Parrot
+
+__all__ = ['Parrot']
