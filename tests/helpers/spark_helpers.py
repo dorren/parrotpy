@@ -3,7 +3,6 @@ from pyspark.sql import SparkSession
 
 @pytest.fixture(scope="session")
 def spark():
-    # py_exe = "C:/Users/dorren/AppData/Local/pypoetry/Cache/virtualenvs/parrotpy-_LyJFcJ7-py3.11/Scripts/python.exe"
     """Create a Spark session for testing."""
     spark = (SparkSession.builder    \
             .master("local[*]")      \

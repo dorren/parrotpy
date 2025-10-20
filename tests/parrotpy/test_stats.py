@@ -55,6 +55,7 @@ def test_normal_array(spark):
       df = df.transform(add_random_array, col_name, new_col, array_size)
       rows = df.collect()
 
+    print(df.schema.json())
 
 def test_numpy(spark):
     @udf(returnType=ArrayType(DoubleType()))
@@ -74,3 +75,17 @@ def test_numpy(spark):
     with benchmark("Use numpy.random.normal()"):
       df = df.withColumn(col_name, gen_numpy_array(F.lit(mean), F.lit(stddev), F.lit(array_size), F.lit(seed)))
       rows = df.collect()
+
+def test_random_choices():
+    import random
+    from collections import Counter
+
+    choices = ['A', 'B', 'C', 'D', 'E']
+    weights = [0.1, 0.2, 0.3, 0.2, 0.2]
+    row_count = 10
+    seed = 42
+
+    random.seed(seed)
+    results = random.choices(choices, weights, k=1000)
+    actual = Counter(results)
+    print(actual)

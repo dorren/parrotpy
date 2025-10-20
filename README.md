@@ -45,18 +45,67 @@ metadata = pr.inspect_df(df)    # python dict
 df = pr.gen_df(metadata, spark=spark, n=100) # gen 100 rows
 ```
 
+## Add Custom Generators
+```python
+
+def category():
+  choices = ["auto", "book", "electronics", "game", "household", "medical", "tool", "toy"]
+  n = len(choices)
+  weights = [1/n]*n
+  return (choices, weight)
+
+Parrot.register(
+  namespace = "acme",
+  function = category
+)
+
+pr = Parrot()
+pr.acme.category()
+```
+
 ## Configurations
+
+Demographics
+```json
+{ "metadata": {
+    "seed": 123
+  }
+  "columns": [
+    {
+      "name": "customer_name",
+      "type": "string",
+      "nullable": true,
+      "metadata":{
+        "generator":"common.name"
+      }
+    },
+    {
+      "name": "address",
+      "type": "string",
+      "nullable": true,
+      "metadata":{
+        "generator":"common.address"
+      }
+    }
+  ]    
+}
+```
 
 Column with categorical data
 ```json
-{ "metadata":
+{ "metadata": {
     "seed": 123
+  }
   "columns": [
-    {"name": "location",
-     "type": "str",
-     "choices":["NY", "CA", "OH"],
-     "weights":[0.3,  0.3,  0.4],
-     "seed": 1234
+    {
+      "name": "location",
+      "type": "string",
+      "nullable": true,
+      "metadata":{
+        "choices":["NY", "CA", "OH"],
+        "weights":[0.3,  0.3,  0.4],
+        "seed": 1234
+      }
     }
   ]    
 }
@@ -64,15 +113,36 @@ Column with categorical data
 
 Column with probability distribution values
 ```json
-{ "metadata":
+{ "metadata": {
     "seed": 123
+  }
   "columns": [
-    {"name": "scores",
-     "type": "float",
-     "distribution": "norm",
-     "mean": 0,
-     "std_dev": 1,
-     "seed": 1234
+    {
+      "name": "score",
+      "type": "double",
+      "nullable": true,
+      "metadata": {
+        "distribution": "norm",
+        "mean": 0,
+        "std_dev": 1,
+        "seed": 1234
+      }
+    },
+    {
+      "name": "scores",
+      "type":{
+        "containsNull":false,
+        "elementType":"double",
+        "type":"array"
+      },
+      "nullable": false,
+      "metadata": {
+        "distribution": "norm",
+        "mean": 0,
+        "std_dev": 1,
+        "seed": 1234, 
+        "array_size": 3
+      }
     }
   ]    
 }
