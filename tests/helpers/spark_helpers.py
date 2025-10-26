@@ -13,3 +13,5 @@ def spark():
     spark.sparkContext.setLogLevel("INFO")
 
     return spark
+
+__all__ = ["spark"]

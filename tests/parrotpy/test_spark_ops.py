@@ -8,10 +8,9 @@ from pyspark.sql.window import Window
 from random import random
 
 from parrotpy import Parrot
-from helpers.spark_helpers import spark
 
 def test_inspect(spark):
-    pr = Parrot()
+    pr = Parrot(spark)
 
     df = spark.range(5)  \
         .withColumn("name", pr.common.name()) \
@@ -93,10 +92,10 @@ def test_sample2(spark, categories):
       .rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
     
     df = df.withColumn("next_cat", F.lead("category").over(Window.orderBy("weight"))) \
-            .withColumn("min_w", F.min("weight").over(window_spec)) \
-            .withColumn("max_w", F.max("weight").over(window_spec)) \
-            .withColumn("min_cat", F.min_by("category", "weight").over(window_spec)) \
-            .withColumn("max_cat", F.max_by("category", "weight").over(window_spec))
+        .withColumn("min_w", F.min("weight").over(window_spec)) \
+        .withColumn("max_w", F.max("weight").over(window_spec)) \
+        .withColumn("min_cat", F.min_by("category", "weight").over(window_spec)) \
+        .withColumn("max_cat", F.max_by("category", "weight").over(window_spec))
     df.show(10, False)
     
     for r in [0.01, 0.99, 0.45, 0.75]:

@@ -15,41 +15,42 @@ from parrotpy import Parrot
 from parrotpy.stats import normal, add_random_array
 
 pr = Parrot(
+  spark = spark,
   seed=123,
   sample_size=1000
 )
 
-# create a new dataframe with id column, values from 0-9
-df = spark.range(10)
+df = pr.empty_df()
+
+df = df.withColumn("norm_num", pr.normal())
 
 # create a new column with value in normal distribution
 # with mean=10, and standard deviation = 2.
-new_col = normal(10, 2, to_int=False, seed=42)
-df = df.withColumn("num", new_col)
+df.withColumn("norm2", pr.normal(10, 2, to_int=False, seed=42))
 
-# create new column with an array of 3 random values 
-df = df.transform(add_random_array, "num_arr", new_col, 3)
+# create array column of size 3 with normal sample values.
+df.withColumn("num_arr", pr.normal_array(3))
 ```
 
 ## Replicate Production Data
 ```Python
 # mimic an existing df
-df = pr.mimic_df(src_df, spark=spark, n=100)
+df = pr.mimic_df(src_df)
 
 # For security or compliance reasons, one may not be allowed to generate test data 
 # from production data in the same environment. In such case, you can extract 
 # the meatadata and save as json file first, then review and modify as needed.
 
 # mimic in two steps
-metadata = pr.inspect_df(df)    # python dict
-df = pr.gen_df(metadata, spark=spark, n=100) # gen 100 rows
+schema = pr.get_schema(df)    # get df schema with data statistics.
+df = pr.gen_df(schema, n=100) # generate 100 rows
 ```
 
 ## Add Custom Generators
 ```python
 
 def category():
-  choices = ["auto", "book", "electronics", "game", "household", "medical", "tool", "toy"]
+  choices = ["auto", "books", "electronics", "game", "household", "medical", "tools", "toys"]
   n = len(choices)
   weights = [1/n]*n
   return (choices, weight)
@@ -65,27 +66,22 @@ pr.acme.category()
 
 ## Configurations
 
-Demographics
+For column without statistical attributes, then generator has to be explicitly defined.
 ```json
-{ "metadata": {
-    "seed": 123
-  }
+{ 
+  "seed": 123,
   "columns": [
     {
       "name": "customer_name",
       "type": "string",
       "nullable": true,
-      "metadata":{
-        "generator":"common.name"
-      }
+      "generator":"common.name"
     },
     {
       "name": "address",
       "type": "string",
       "nullable": true,
-      "metadata":{
-        "generator":"common.address"
-      }
+      "generator":"common.address"
     }
   ]    
 }
@@ -93,9 +89,8 @@ Demographics
 
 Column with categorical data
 ```json
-{ "metadata": {
-    "seed": 123
-  }
+{ 
+  "seed": 123,
   "columns": [
     {
       "name": "location",
@@ -113,20 +108,18 @@ Column with categorical data
 
 Column with probability distribution values
 ```json
-{ "metadata": {
-    "seed": 123
-  }
+{ 
+  "count": 100,
+  "seed": 123
   "columns": [
     {
       "name": "score",
       "type": "double",
       "nullable": true,
-      "metadata": {
-        "distribution": "norm",
-        "mean": 0,
-        "std_dev": 1,
-        "seed": 1234
-      }
+      "distribution": "norm",
+      "mean": 0,
+      "std_dev": 1,
+      "seed": 1234
     },
     {
       "name": "scores",
@@ -136,15 +129,49 @@ Column with probability distribution values
         "type":"array"
       },
       "nullable": false,
-      "metadata": {
-        "distribution": "norm",
-        "mean": 0,
-        "std_dev": 1,
-        "seed": 1234, 
-        "array_size": 3
-      }
+      "distribution": "norm",
+      "mean": 0,
+      "std_dev": 1,
+      "seed": 1234, 
+      "array_size": 3
     }
   ]    
 }
+```
+
+Table with foreign keys. 
+
+For example, customer_id is generated already. Pass the refrence, and it will use id column from dataframe stored in a dictionary of key "customers". 
+```json
+{ 
+  "name": "orders",
+  "columns": [
+    {
+      "name": "order_id",
+      "type": "integer",
+      "nullable": true,
+      "auto_increment": true  
+    },
+    {
+      "name": "customer_id",
+      "type": "integer",
+      "nullable": true,
+      "references": "customers.id"
+    }
+  ]
+}
+```
+auto_increment's value can be 
+* true, starts at 1. 
+* [1000], starts at 1000
+* [1000, 10], starts at 1000, and increment by 10.
+
+
+```python
+pr = Parrot()
+
+dfs = {}
+dfs["customers"] = pr.gen("customers.json")
+dfs["orders"]    = pr.gen("orders.json", dataframes=dfs)
 ```
 

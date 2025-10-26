@@ -4,9 +4,9 @@ from pyspark.sql import Column
 from parrotpy import Parrot
 from helpers.spark_helpers import spark
 
-@pytest.mark.skip
+
 def test_parrot(spark):
-    pr = Parrot()
+    pr = Parrot(spark)
 
     df = spark.range(5)  \
         .withColumn("name", pr.common.name()) \
@@ -15,7 +15,7 @@ def test_parrot(spark):
     df.show(3, False)
 
 def test_get_attr(spark):
-    pr = Parrot()
+    pr = Parrot(spark)
 
     s = "parrotpy.stats.normal"
     fn = getattr(__import__(s.rsplit(".",1)[0], fromlist=[s.rsplit(".",1)[1]]), s.rsplit(".",1)[1])

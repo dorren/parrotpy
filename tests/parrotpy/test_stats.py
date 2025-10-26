@@ -1,22 +1,13 @@
-from contextlib import contextmanager
 import numpy as np
 import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, DoubleType
-import timeit
 
 from helpers.spark_helpers import spark
-from parrotpy.stats import normal, add_random_array
-
-
-@contextmanager
-def benchmark(name: str):
-    start = timeit.default_timer()
-    yield
-    end = timeit.default_timer()
-    print(f"[BENCHMARK] {name}: {end - start:.4f} seconds")
+from parrotpy.stats import normal, normal_array
+from helpers.test_helpers import benchmark
 
 
 def test_normal_distribution(spark):
@@ -43,19 +34,31 @@ def test_normal_distribution(spark):
 
 def test_normal_array(spark):
     row_count = 1000
+    array_size = 10
+    mean = 100
+    stddev = 5.0
+    seed = 42
+    col_name = "norm_arr"
+
+    samples = normal_array(array_size, mean, stddev, seed=seed)
+
+    df = spark.range(row_count)
+    with benchmark("Generate normal array"):
+      df = df.withColumn(col_name, samples)
+      rows = df.collect()
+    df.show(3, False)
+
+def test_normal_array_no_seed(spark):
+    row_count = 1000
     mean = 100
     stddev = 5.0
     array_size = 10
     seed = 42
     col_name = "norm_arr"
 
+    samples = normal_array(array_size, mean, stddev)
     df = spark.range(row_count)
-    new_col = normal(mean=mean, sd=stddev, seed=seed)
-    with benchmark("Using Spark randn()"):
-      df = df.transform(add_random_array, col_name, new_col, array_size)
-      rows = df.collect()
-
-    print(df.schema.json())
+    df = df.withColumn(col_name, samples)
 
 def test_numpy(spark):
     @udf(returnType=ArrayType(DoubleType()))
