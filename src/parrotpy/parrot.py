@@ -3,7 +3,7 @@ from pyspark.sql.types import StructField, StructType
 
 from parrotpy import core
 from parrotpy.stats import normal
-
+from .schema import ColumnSchema
 
 class Parrot:
     id_col_name = "_id"
@@ -42,16 +42,16 @@ class Parrot:
           .withColumnRenamed("id", "_id")
         
         for field in schema.fields:
-            new_col = self.gen_field(field)
+            new_col = self.build_column(field)
             df = df.withColumn(field.name, new_col.cast(field.dataType))
 
         df = df.drop(self.id_col_name)
         return df
     
-    def gen_field(self, field_schema: StructField):
-        md = field_schema.metadata
+    def build_column(self, col_schema: ColumnSchema):
+        cs = col_schema
 
-        if md.get("distribution") == "normal":
-            return normal(md.get("mean", 0), md.get("stddev", 1), seed=md.get("seed", None))
+        if cs.get("distribution") == "normal":
+            return normal(cs.get("mean", 0), cs.get("stddev", 1), seed=cs.get("seed", None))
         else:
-            raise ValueError(f"Unsupported distribution: {md.get('distribution')}")
+            raise ValueError(f"Unsupported distribution: {cs.get('distribution')}")

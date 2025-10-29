@@ -1,3 +1,3 @@
-class FieldMetadata:
-    def __init__(self, metadata: dict):
-        self.metadata = metadata
+class ColumnSchema:
+    def __init__(self, attrs: dict):
+        self.attrs = attrs

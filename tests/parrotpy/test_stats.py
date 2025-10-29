@@ -79,16 +79,42 @@ def test_numpy(spark):
       df = df.withColumn(col_name, gen_numpy_array(F.lit(mean), F.lit(stddev), F.lit(array_size), F.lit(seed)))
       rows = df.collect()
 
-def test_random_choices():
+def test_py_random_choices():
     import random
     from collections import Counter
 
     choices = ['A', 'B', 'C', 'D', 'E']
-    weights = [0.1, 0.2, 0.3, 0.2, 0.2]
-    row_count = 10
+    weights = [0.1, 0.2, 0.3, 0.3, 0.1]
+    row_count = 10000
     seed = 42
 
     random.seed(seed)
-    results = random.choices(choices, weights, k=1000)
+    results = random.choices(choices, weights, k=row_count)
     actual = Counter(results)
     print(actual)
+
+def test_uniform_choice(spark):
+    from parrotpy.stats import _uniform_choice
+
+    elements = ['A', 'B', 'C', 'D', 'E']
+    row_count = 1000
+    seed = 42
+    col_name = "choice"
+
+    df = spark.range(row_count)
+    df = df.withColumn("selected", _uniform_choice(elements))
+    df.groupBy("selected").count().show(5, False)
+
+def test_weighted_choice(spark):
+    from parrotpy.stats import _weighted_choice
+
+    elements = ['A', 'B', 'C', 'D', 'E']
+    weights =  [0.1, 0.2, 0.3, 0.3, 0.1]
+    row_count = 10000
+
+    df = spark.range(row_count)
+    df = df \
+      .withColumn("rand", F.rand()) \
+      .withColumn("selected", _weighted_choice(elements, weights, F.col("rand")))
+
+    df.groupBy("selected").count().orderBy("selected").show(5, False)

@@ -1,3 +1,3 @@
-from .main import Parrot
+from .parrot import Parrot
 
 __all__ = ['Parrot']
