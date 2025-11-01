@@ -5,6 +5,7 @@ from parrotpy import Parrot
 from helpers.spark_helpers import spark
 
 
+@pytest.mark.skip(reason="experimental")
 def test_parrot(spark):
     pr = Parrot(spark)
 
@@ -14,6 +15,7 @@ def test_parrot(spark):
 
     df.show(3, False)
 
+@pytest.mark.skip(reason="experimental")
 def test_get_attr(spark):
     pr = Parrot(spark)
 

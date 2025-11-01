@@ -12,7 +12,7 @@ def benchmark(name: str):
     end = timeit.default_timer()
     print(f"[BENCHMARK] {name}: {end - start:.4f} seconds")
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def parrot(spark):
     pr = Parrot(spark)
     return pr

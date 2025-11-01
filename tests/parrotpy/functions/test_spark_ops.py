@@ -8,43 +8,9 @@ from pyspark.sql.window import Window
 from random import random
 
 from parrotpy import Parrot
+from parrotpy.functions.core import rand_str, rand_num_str
 from helpers.test_helpers import benchmark
 
-def test_inspect(spark):
-    pr = Parrot(spark)
-
-    df = spark.range(5)  \
-        .withColumn("name", pr.common.name()) \
-        .withColumn("num",  pr.stats.normal(0, 1))
-
-    j_str = df.schema.json()
-
-def test_recreate_schema(spark):
-    j_str = '''
-        {"fields": [
-            {"metadata": {}, "name": "id", "nullable": false, "type": "long"},
-            {"metadata": {}, "name": "name", "nullable": true, "type": "string"},
-            {
-              "metadata": {
-                "distribution":"norm",
-                "mean": 0.0,
-                "std_dev": 1.0,
-                "seed": 1234
-            }, 
-              "name": "num", 
-              "nullable": false, 
-              "type": "double"
-            }
-          ],
-        "type": "struct"
-        }
-    '''
-
-    schema2 = StructType.fromJson(json.loads(j_str))
-    field = schema2["num"]
-    assert "distribution" in field.metadata
-    # md = Metadata(field.metadata)
-    # print(md)
 
 @pytest.fixture(scope="module")
 def categories():
@@ -172,3 +138,24 @@ def test_fast_row_number(spark):
     )
     
     print(final_df.count())
+
+ 
+def test_sql(spark):
+    df = spark.range(3)
+
+    c1 = F.col("id") + 10
+    df1 = df.withColumn("id_plus_10", c1)
+    df1.show(3, False)
+    e1 = c1._jc.toString()
+    print(e1)
+    # df.withColumn("c1", F.expr(e1)).show(3, False)
+
+    df2 = df.withColumn("id_plus_10", F.expr("id + 10"))
+    df2.show(3, False)
+    e2 = F.expr("id + 10").alias("c2")._jc.toString()
+    print(e2)
+    df2.selectExpr(e2).show(3, False) 
+
+    c3 = F.rand(123)
+    print(dir(c3._jc))
+

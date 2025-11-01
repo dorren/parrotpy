@@ -4,7 +4,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, DoubleType, StringType
 
-from parrotpy.common import name, address
+from parrotpy.functions.common import name, address
 from helpers.spark_helpers import spark
 
 @pytest.fixture(scope="module")
@@ -26,3 +26,22 @@ def test_df(spark):
 
     names_df = df.select("name", "address").distinct()
     assert df.count() == names_df.count(), "Generated duplicate names in DataFrame"
+
+
+def test_expr(spark):
+
+    def fake_name():
+        faker = Faker()
+        return faker.name()
+    
+    name_udf = udf(fake_name, StringType())
+    spark.udf.register("fake_name", name_udf)
+
+    df = spark.range(5)
+    df.createOrReplaceTempView("test_table")
+    df = spark.sql("""
+        SELECT id, fake_name() AS my_name
+        FROM test_table
+    """)
+    # df = df.withColumn("my_name", F.expr("fake_name()"))
+    df.show(3, False)

@@ -7,6 +7,34 @@ ParrotPy is a test/synthetic data generation tool for [Apache Spark](https://git
 # Usage
 
 ## Basic Usage
+```python
+# brainstorm
+
+from parrotpy import Parrot
+from parrotpy.stats import uniform
+
+pr = Parrot(
+  seed=123,
+  sample_size=1000
+)
+
+# row value can be generator function, spark function/expression.
+cust_schema = (pr
+  .build_column("id",         "int", pr.auto_increment(start=10000, step=3))
+  .build_column("name",       "str", pr.common.name())
+  .build_column("address",    "str", pr.common.address())
+  .build_column("birth_year", "int", pr.stats.uniform(min=1925, max=2025))
+  .build_column("salary",     "int", 
+      pr.stats.normal(mean=70000, std_dev=10000)
+        .with_nulls(prob=0.1)
+  )
+)
+
+pr.generate(n=100, schema=cust_schema)
+```
+
+
+
 ```Python
 from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
@@ -81,7 +109,16 @@ For column without statistical attributes, then generator has to be explicitly d
       "name": "address",
       "type": "string",
       "nullable": true,
-      "generator":"common.address"
+      "generators": [
+        {
+          "name":"common.address", 
+          "args":[]
+        },
+        {
+          "name":"common.with_nulls", 
+          "args":[0.1]
+        },
+      ]
     }
   ]    
 }

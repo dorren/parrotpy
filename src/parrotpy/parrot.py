@@ -1,21 +1,20 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.types import StructField, StructType
 
-from parrotpy import core
-from parrotpy.stats import normal
-from .schema import ColumnSchema
+from parrotpy.functions import core
+from parrotpy.generators.stats import Uniform, Normal
 
 class Parrot:
     id_col_name = "_id"
 
     def __init__(self, spark: SparkSession):
-        lib_name = __package__  # parrotpy
+        self.columns = []
         self.spark = spark
 
-        modules = ["common", "stats"]
-        for mod in modules:
-            mod_name = f"{lib_name}.{mod}"
-            setattr(self, mod, __import__(mod_name, fromlist=[""]))
+        # lib_name = __package__  # parrotpy
+        # modules = ["common", "stats"]
+        # for mod in modules:
+        #     mod_name = f"{lib_name}.{mod}"
+        #     setattr(self, mod, __import__(mod_name, fromlist=[""]))
 
     def empty_df(self, n: int):
         """Create an empty dataframe with n rows.
@@ -37,21 +36,37 @@ class Parrot:
         return core.auto_increment(start, step)
 
 
-    def gen_df(self, schema: StructType, row_count: int):
-        df = self.spark.range(row_count) \
-          .withColumnRenamed("id", "_id")
+    def gen_df(self, row_count: int):
+        df = self.empty_df(row_count)
         
-        for field in schema.fields:
-            new_col = self.build_column(field)
-            df = df.withColumn(field.name, new_col.cast(field.dataType))
+        for col in self.columns:
+            df = col.generate(df)
 
-        df = df.drop(self.id_col_name)
         return df
     
-    def build_column(self, col_schema: ColumnSchema):
-        cs = col_schema
+    def build_column(self, name: str, dtype: str, **kwargs: dict):
+        """Build a column based on the provided attributes.
 
-        if cs.get("distribution") == "normal":
-            return normal(cs.get("mean", 0), cs.get("stddev", 1), seed=cs.get("seed", None))
-        else:
-            raise ValueError(f"Unsupported distribution: {cs.get('distribution')}")
+        Args:
+            name (str): Column name.
+            dtype (str): Data type of the column.
+            attrs (dict): Attributes for the generator.
+
+        Returns:
+            Column: Spark Column.
+        """
+        gen_type = kwargs.get("gen")
+
+        if gen_type == "uniform":
+            del kwargs["gen"]
+            new_col = Uniform(name, dtype, **kwargs)
+            self.columns.append(new_col)
+        elif gen_type == "normal":
+            del kwargs["gen"]
+            new_col = Normal(name, dtype, **kwargs)
+            self.columns.append(new_col)
+
+        return self
+
+    def schema(self):
+        return [col.to_dict() for col in self.columns]

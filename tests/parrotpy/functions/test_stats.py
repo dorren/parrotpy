@@ -6,7 +6,7 @@ from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, DoubleType
 
 from helpers.spark_helpers import spark
-from parrotpy.stats import normal, normal_array
+from parrotpy.functions.stats import normal
 from helpers.test_helpers import benchmark
 
 
@@ -18,7 +18,7 @@ def test_normal_distribution(spark):
     new_col_name = "norm"
 
     df = spark.range(row_count)
-    new_col = normal(mean, stddev, seed=42)
+    new_col = normal(1, mean, stddev, seed=42)
     df = df.withColumn(new_col_name, new_col)
     df.show(3, False)
 
@@ -40,7 +40,7 @@ def test_normal_array(spark):
     seed = 42
     col_name = "norm_arr"
 
-    samples = normal_array(array_size, mean, stddev, seed=seed)
+    samples = normal(array_size, mean, stddev, seed=seed)
 
     df = spark.range(row_count)
     with benchmark("Generate normal array"):
@@ -49,16 +49,16 @@ def test_normal_array(spark):
     df.show(3, False)
 
 def test_normal_array_no_seed(spark):
-    row_count = 1000
+    row_count = 5
     mean = 100
     stddev = 5.0
-    array_size = 10
-    seed = 42
+    array_size = 3 
     col_name = "norm_arr"
 
-    samples = normal_array(array_size, mean, stddev)
+    samples = normal(array_size, mean, stddev)
     df = spark.range(row_count)
     df = df.withColumn(col_name, samples)
+    df.show(3, False)
 
 def test_numpy(spark):
     @udf(returnType=ArrayType(DoubleType()))
@@ -94,10 +94,10 @@ def test_py_random_choices():
     print(actual)
 
 def test_uniform_choice(spark):
-    from parrotpy.stats import _uniform_choice
+    from parrotpy.functions.stats import _uniform_choice
 
     elements = ['A', 'B', 'C', 'D', 'E']
-    row_count = 1000
+    row_count = 10000
     seed = 42
     col_name = "choice"
 
@@ -106,7 +106,7 @@ def test_uniform_choice(spark):
     df.groupBy("selected").count().show(5, False)
 
 def test_weighted_choice(spark):
-    from parrotpy.stats import _weighted_choice
+    from parrotpy.functions.stats import _weighted_choice
 
     elements = ['A', 'B', 'C', 'D', 'E']
     weights =  [0.1, 0.2, 0.3, 0.3, 0.1]
@@ -114,7 +114,7 @@ def test_weighted_choice(spark):
 
     df = spark.range(row_count)
     df = df \
-      .withColumn("rand", F.rand()) \
-      .withColumn("selected", _weighted_choice(elements, weights, F.col("rand")))
+        .withColumn("rnd", F.rand()) \
+        .withColumn("selected", _weighted_choice(elements, weights, "rnd"))
 
     df.groupBy("selected").count().orderBy("selected").show(5, False)
