@@ -1,5 +1,4 @@
 from pyspark.sql import DataFrame
-from .functions.stats import _normal_single
 
 class TableSchema:
     def __init__(self, name: str, columns: list):

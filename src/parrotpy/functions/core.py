@@ -63,7 +63,14 @@ def rand_array(n: int, gen_fn, seed=None) -> Column:
 
     return arr
 
+def rand_elem_or_array(n: int, gen_fn, seed=None) -> Column:
+    return gen_fn(seed=seed) if n == 1 else rand_array(n, gen_fn, seed)
+
 __all__ = [
-    "empty_df", "auto_increment",
-    "rand_str", "rand_num_str", "rand_array"
+    "empty_df", 
+    "auto_increment",
+    "rand_str", 
+    "rand_num_str", 
+    "rand_array", 
+    "rand_elem_or_array"
 ]

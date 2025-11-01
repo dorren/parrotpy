@@ -7,29 +7,22 @@ import pyspark.sql.functions as F
 from .core import rand_array
 
 
-def _normal_single(mean: float=0.0, sd: float=1.0, seed:int=None, to_int:bool=False) -> Column:
+def normal(mean: float=0.0, stddev: float=1.0, seed:int=None, to_int:bool=False) -> Column:
     """Generate a spark column with sample value from a normal distribution.
 
     Args:
         mean (float): The mean of the normal distribution.
-        sd (float): The standard deviation of the normal distribution.
+        stddev (float): The standard deviation of the normal distribution.
         seed (int, optional): randomization seed.
         to_int (bool, optional): Whether to return integer value. Defaults to False.
 
     Returns:
         Column: Spark Column.
     """
-    value = F.randn(seed) * sd + mean
+    value = F.randn(seed) * stddev + mean
     value = F.rint(value).cast(IntegerType()) if to_int else value
 
     return value
-
-def normal(n: int = 1, mean: float=0.0, sd: float=1.0, seed:int=None, to_int:bool=False) -> Column:
-    if n == 1:
-        return _normal_single(mean, sd, seed, to_int)
-    else:
-        gen_fn = partial(_normal_single, mean=mean, sd=sd, to_int=to_int)
-        return rand_array(n, gen_fn, seed)
 
 
 def _uniform_choice(elements: list, seed: int=None) -> Column:

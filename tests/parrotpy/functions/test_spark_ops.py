@@ -139,23 +139,4 @@ def test_fast_row_number(spark):
     
     print(final_df.count())
 
- 
-def test_sql(spark):
-    df = spark.range(3)
-
-    c1 = F.col("id") + 10
-    df1 = df.withColumn("id_plus_10", c1)
-    df1.show(3, False)
-    e1 = c1._jc.toString()
-    print(e1)
-    # df.withColumn("c1", F.expr(e1)).show(3, False)
-
-    df2 = df.withColumn("id_plus_10", F.expr("id + 10"))
-    df2.show(3, False)
-    e2 = F.expr("id + 10").alias("c2")._jc.toString()
-    print(e2)
-    df2.selectExpr(e2).show(3, False) 
-
-    c3 = F.rand(123)
-    print(dir(c3._jc))
 

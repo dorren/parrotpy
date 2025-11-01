@@ -56,16 +56,15 @@ class Parrot:
             Column: Spark Column.
         """
         gen_type = kwargs.get("gen")
+        if gen_type:
+            del kwargs["gen"]
 
         if gen_type == "uniform":
-            del kwargs["gen"]
             new_col = Uniform(name, dtype, **kwargs)
-            self.columns.append(new_col)
         elif gen_type == "normal":
-            del kwargs["gen"]
             new_col = Normal(name, dtype, **kwargs)
-            self.columns.append(new_col)
-
+        
+        self.columns.append(new_col)
         return self
 
     def schema(self):
