@@ -1,8 +1,9 @@
 from collections import UserDict
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, Column
+from typing import Any
 
-from .schema import DfSchema
-from parrotpy.generators.stats import Uniform, Normal
+from .schema import DfSchema, ComputedColumn, Invocation, InvocationColumn
+from parrotpy.generators.stats import normal
 
 class Context(UserDict):
     def register(name: str, fn:callable):
@@ -13,8 +14,18 @@ class SchemaBuilder:
     def __init__(self, parrot):
         self.parrot = parrot
         self.schema = DfSchema()
+
+    def build_from_dict(self, name: str, dtype: str, kwargs: dict):
+        gen_fn = kwargs.get("gen")
+        if gen_fn:
+            del kwargs["gen"]
+        invk_res = normal(**kwargs)  # TODO, call fn by name
+        col = InvocationColumn(name, dtype, invk_res)
+        self.schema.add_column(col)
+
+        return self
     
-    def build_column(self, name: str, dtype: str, **kwargs: dict):
+    def build_column(self, name: str, dtype: str, col_value:Any = None, **kwargs: dict):
         """Build a column based on the provided attributes.
 
         Args:
@@ -25,17 +36,16 @@ class SchemaBuilder:
         Returns:
             Column: Spark Column.
         """
-        gen_type = kwargs.get("gen")
-        if gen_type:
-            del kwargs["gen"]
-
-        if gen_type == "uniform":
-            new_col = Uniform(name, dtype, **kwargs)
-        elif gen_type == "normal":
-            new_col = Normal(name, dtype, **kwargs)
-        
-        self.schema.add_column(new_col)
-        return self
+        print(f"build_column() col: {col_value}, kw: {kwargs}")
+        if col_value is not None:
+            if type(col_value).__name__ == "Column":
+                col = ComputedColumn(name, dtype, col_value)
+                self.schema.add_column(col)
+            elif type(col_value) is Invocation:
+                col = InvocationColumn(name, dtype, col_value)
+                self.schema.add_column(col)
+        else:
+            return self.build_from_dict(name, dtype, kwargs)
 
 
     def gen_df(self, row_count: int):

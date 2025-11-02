@@ -1,8 +1,6 @@
 import pytest
-from pyspark.sql import SparkSession
+
 from pyspark.sql import functions as F
-from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, DoubleType
 from pyspark.testing import assertDataFrameEqual
 
 from parrotpy.functions.core import auto_increment, rand_str, rand_num_str, rand_array
