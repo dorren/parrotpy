@@ -5,7 +5,7 @@ from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, DoubleType
 from pyspark.testing import assertDataFrameEqual
 
-from parrotpy.functions.core import rand_str, rand_num_str, rand_array
+from parrotpy.functions.core import auto_increment, rand_str, rand_num_str, rand_array
 
 def test_empty_df(parrot):
     n = 10
@@ -18,7 +18,7 @@ def test_auto_increment(spark, parrot):
     n = 10
 
     df = (parrot.empty_df(n)
-        .withColumn("id", parrot.auto_increment(start=1000, step=10))
+        .withColumn("id", auto_increment(start=1000, step=10))
     )
 
     ids = [(1000 + i * 10,) for i in range(n)]

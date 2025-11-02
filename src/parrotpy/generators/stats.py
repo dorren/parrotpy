@@ -3,11 +3,10 @@ from pyspark.sql import Column, DataFrame
 import pyspark.sql.functions as F
 from typing import Union
 
-from ..schema import BaseColumn
-from ..functions.core import rand_array, rand_elem_or_array
-from ..functions.stats import normal
+from ..schema import DfColumn
+from ..functions.stats import uniform, normal
 
-class Uniform(BaseColumn):
+class Uniform(DfColumn):
     def __init__(self, name: str, dtype: str, n: int = 1, min_value: float = 0.0, max_value: float = 1.0, seed: int = None, to_int: bool = False):
         super().__init__(name, dtype)
         self.n = n
@@ -23,8 +22,7 @@ class Uniform(BaseColumn):
         return value
     
     def generate(self, df: DataFrame) -> Column:
-        gen_fn = partial(self.rand_num, min_value=self.min_value, max_value=self.max_value, to_int=self.to_int)
-        col_val = rand_elem_or_array(self.n, gen_fn, self.seed)
+        col_val = uniform(n=self.n, min_value=self.min_value, max_value=self.max_value, seed=self.seed, to_int=self.to_int)
         df = df.withColumn(self.name, col_val)
         
         return df
@@ -40,13 +38,16 @@ class Uniform(BaseColumn):
             "seed": self.seed,
             "to_int": self.to_int
         }
-         
+
         return attrs
     
 
-class Normal(BaseColumn):
+class Normal(DfColumn):
     def __init__(self, name: str, dtype: str, n: int = 1, mean: float = 0.0, stddev: float = 1.0, seed: int = None, to_int: bool = False):
         super().__init__(name, dtype)
+        fn = self.__init__
+        print(fn.__code__.co_varnames[:fn.__code__.co_argcount])
+        print(self.__init__.__defaults__)
         self.n = n
         self.mean = mean
         self.stddev = stddev
@@ -54,8 +55,7 @@ class Normal(BaseColumn):
         self.to_int = to_int
 
     def generate(self, df: DataFrame) -> Column:
-        gen_fn = partial(normal, mean=self.mean, stddev=self.stddev, to_int=self.to_int)
-        col_val = rand_elem_or_array(self.n, gen_fn, self.seed)
+        col_val = normal(n=self.n, mean=self.mean, stddev=self.stddev, seed=self.seed, to_int=self.to_int)
         df = df.withColumn(self.name, col_val)
         
         return df
@@ -73,3 +73,13 @@ class Normal(BaseColumn):
         }
          
         return attrs
+    
+
+# experimental
+def normal_gen(df: DataFrame, name: str, dtype: str, 
+    n: int = 1, mean: float = 0.0, stddev: float = 1.0, seed: int = None, to_int: bool = False) -> DataFrame:
+    return normal(n=n, mean=mean, stddev=stddev, seed=seed, to_int=to_int)
+    
+def col_gen(df: DataFrame, name: str, dtype: str, col_val: Column) -> DataFrame:
+    return df.withColumn(name, col_val.cast(dtype))
+

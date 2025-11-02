@@ -1,19 +1,6 @@
-from pyspark.sql import Column, SparkSession
+from pyspark.sql import Column
 from pyspark.sql import functions as F
-from pyspark.sql.types import ArrayType, BooleanType, DateType, DoubleType, LongType, StringType
-from pyspark.sql.window import Window
 
-def empty_df(spark: SparkSession, n: int):
-    """Create an empty dataframe with n rows.
-
-    Args:
-        n (int): Number of rows.
-
-    Returns:
-        DataFrame: Spark DataFrame.
-    """
-    df = spark.range(n).drop("id")
-    return df
 
 def auto_increment(start: int = 0, step: int = 1) -> Column:
     """Generate an auto-incrementing column starting from `start` with a given `step`.
@@ -64,10 +51,12 @@ def rand_array(n: int, gen_fn, seed=None) -> Column:
     return arr
 
 def rand_elem_or_array(n: int, gen_fn, seed=None) -> Column:
-    return gen_fn(seed=seed) if n == 1 else rand_array(n, gen_fn, seed)
+    if n == 1:
+        return gen_fn(seed=seed)  
+    else:
+        return rand_array(n, gen_fn, seed)
 
 __all__ = [
-    "empty_df", 
     "auto_increment",
     "rand_str", 
     "rand_num_str", 

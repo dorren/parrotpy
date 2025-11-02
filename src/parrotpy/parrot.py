@@ -1,48 +1,18 @@
+from collections import UserDict
 from pyspark.sql import SparkSession
 
-from parrotpy.functions import core
+from .schema import DfSchema
 from parrotpy.generators.stats import Uniform, Normal
 
-class Parrot:
-    id_col_name = "_id"
-
-    def __init__(self, spark: SparkSession):
-        self.columns = []
-        self.spark = spark
-
-        # lib_name = __package__  # parrotpy
-        # modules = ["common", "stats"]
-        # for mod in modules:
-        #     mod_name = f"{lib_name}.{mod}"
-        #     setattr(self, mod, __import__(mod_name, fromlist=[""]))
-
-    def empty_df(self, n: int):
-        """Create an empty dataframe with n rows.
-
-        Args:
-            n (int): Number of rows.
-
-        Returns:
-            DataFrame: Spark DataFrame.
-        """
-        return core.empty_df(self.spark, n)
-    
-    def auto_increment(self, start: int = 0, step: int = 1):
-        """Generate an auto-incrementing column starting from `start` with a given `step`.
-
-        Args:
-            start (int, optional): Starting value. Defaults to 0.
-        """
-        return core.auto_increment(start, step)
+class Context(UserDict):
+    def register(name: str, fn:callable):
+        super().__setitem__(name, fn)
 
 
-    def gen_df(self, row_count: int):
-        df = self.empty_df(row_count)
-        
-        for col in self.columns:
-            df = col.generate(df)
-
-        return df
+class SchemaBuilder:
+    def __init__(self, parrot):
+        self.parrot = parrot
+        self.schema = DfSchema()
     
     def build_column(self, name: str, dtype: str, **kwargs: dict):
         """Build a column based on the provided attributes.
@@ -64,8 +34,45 @@ class Parrot:
         elif gen_type == "normal":
             new_col = Normal(name, dtype, **kwargs)
         
-        self.columns.append(new_col)
+        self.schema.add_column(new_col)
         return self
 
-    def schema(self):
-        return [col.to_dict() for col in self.columns]
+
+    def gen_df(self, row_count: int):
+        df = self.parrot.empty_df(row_count)
+        
+        for col in self.schema.columns:
+            df = col.generate(df)
+
+        return df
+
+
+class Parrot:
+
+    def __init__(self, spark: SparkSession):
+        self.spark = spark
+
+        # lib_name = __package__  # parrotpy
+        # modules = ["common", "stats"]
+        # for mod in modules:
+        #     mod_name = f"{lib_name}.{mod}"
+        #     setattr(self, mod, __import__(mod_name, fromlist=[""]))
+
+
+    def empty_df(self, n: int):
+        """Create an empty dataframe with n rows.
+
+        Args:
+            n (int): Number of rows.
+
+        Returns:
+            DataFrame: Spark DataFrame.
+        """
+        df = self.spark.range(n).drop("id")
+        return df
+    
+    def schema_builder(self):
+        return SchemaBuilder(self)
+    
+
+

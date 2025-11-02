@@ -4,11 +4,25 @@ from pyspark.sql import Column, DataFrame
 from pyspark.sql.types import IntegerType
 import pyspark.sql.functions as F
 
-from .core import rand_array
+from .core import rand_array, rand_elem_or_array
 
+def uniform_1(min_value: float = 0.0, max_value: float=1.0, seed: int=None, to_int: bool=False) -> Column:
+    """Generate a single sample value from a uniform distribution.
+    """
+    diff = max_value - min_value
+    value = F.rand(seed) * diff + min_value
+    value = value.cast(IntegerType()) if to_int else value
+    return value
 
-def normal(mean: float=0.0, stddev: float=1.0, seed:int=None, to_int:bool=False) -> Column:
-    """Generate a spark column with sample value from a normal distribution.
+def uniform(n: int = 1, min_value: float = 0.0, max_value: float=1.0, seed: int=None, to_int: bool=False) -> Column:
+    """ generate single or array of normal distribution sample values
+    """
+    fn = partial(uniform_1, min_value=min_value, max_value=max_value, to_int=to_int)
+    col_val = rand_elem_or_array(n, fn, seed)
+    return col_val
+
+def normal_1(mean: float=0.0, stddev: float=1.0, seed:int=None, to_int:bool=False) -> Column:
+    """Generate a single sample value from a normal distribution.
 
     Args:
         mean (float): The mean of the normal distribution.
@@ -24,6 +38,12 @@ def normal(mean: float=0.0, stddev: float=1.0, seed:int=None, to_int:bool=False)
 
     return value
 
+def normal(n: int = 1, mean: float = 0.0, stddev: float = 1.0, seed: int = None, to_int: bool = False) -> Column:
+    """ generate single or array of normal distribution sample values
+    """
+    fn = partial(normal_1, mean=mean, stddev=stddev, to_int=to_int)
+    col_val = rand_elem_or_array(n, fn, seed)
+    return col_val
 
 def _uniform_choice(elements: list, seed: int=None) -> Column:
     n = len(elements)

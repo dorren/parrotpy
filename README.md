@@ -20,14 +20,12 @@ pr = Parrot(
 
 # row value can be generator function, spark function/expression.
 cust_schema = (pr
-  .build_column("id",         "int", pr.auto_increment(start=10000, step=3))
-  .build_column("name",       "str", pr.common.name())
-  .build_column("address",    "str", pr.common.address())
-  .build_column("birth_year", "int", pr.stats.uniform(min=1925, max=2025))
-  .build_column("salary",     "int", 
-      pr.stats.normal(mean=70000, std_dev=10000)
-        .with_nulls(prob=0.1)
-  )
+  .build_column("id",         "int", gen="auto_increment", start=10000, step=3)
+  .build_column("name",       "str", gen="name")
+  .build_column("address",    "str", gen="address")
+  .build_column("birth_year", "int", gen="uniform", min=1925, max=2025)
+  .build_column("salary",     "int", gen="normal", mean=70000, std_dev=10000)
+  .build_column("nickname_{{ i }}", "str", gen="rand_str", _loops=3)
 )
 
 pr.generate(n=100, schema=cust_schema)
