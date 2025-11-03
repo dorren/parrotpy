@@ -4,7 +4,7 @@ from pprint import pprint
 
 from parrotpy import functions as PF
 from parrotpy import generators as PG
-from parrotpy.schema import signatured
+from parrotpy.schema import snapshot
 
 @pytest.fixture
 def sb(parrot):
@@ -43,7 +43,7 @@ def test_polymorphism(sb):
 
 def test_wrap(sb):
     n = 3
-    wrapped_fn = signatured(PF.stats.uniform)
+    wrapped_fn = snapshot(PF.stats.uniform)
 
     sb.build_column("u1", "double", wrapped_fn(seed=1))
     sb.gen_df(n).show(n, False)

@@ -15,8 +15,8 @@ class Invocation:
     fn_result: Any
     params: dict
 
-def signatured(func):
-    """ Decorator that captures function parameter signatures """
+def snapshot(func):
+    """ Decorator that captures function path, result, and parameter signatures """
     @wraps(func)
     def wrapper(*args, **kwargs):
         fn_path = f"{func.__module__}.{func.__name__}"
@@ -62,7 +62,7 @@ class ComputedColumn:
         }
         return result
 
-class InvocationColumn(ComputedColumn):
+class InvocationColumn:
     def __init__(self, name: str, dtype: str, invk: Invocation):
         self.name = name
         self.dtype = dtype
@@ -73,8 +73,12 @@ class InvocationColumn(ComputedColumn):
         return df
     
     def to_dict(self):
-        fn_path = {"gen": self.invocation.fn_path}
-        combined = {**super().to_dict(), **self.invocation.params, **fn_path}
+        result = {
+            "name": self.name,
+            "type": self.dtype,
+            "gen": self.invocation.fn_path
+        }
+        combined = {**result, **self.invocation.params}
 
         return combined
 
