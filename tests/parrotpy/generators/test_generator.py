@@ -4,7 +4,7 @@ from pprint import pprint
 
 from parrotpy import functions as PF
 from parrotpy import generators as PG
-from parrotpy.schema import snapshot
+from parrotpy.utils import snapshot
 
 @pytest.fixture
 def sb(parrot):

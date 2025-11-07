@@ -1,4 +1,4 @@
-from ..schema import snapshot 
+from ..utils import snapshot 
 from parrotpy.functions import stats
     
 @snapshot
