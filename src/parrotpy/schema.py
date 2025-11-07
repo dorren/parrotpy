@@ -24,7 +24,7 @@ def snapshot(func):
         return Invocation(fn_path, result, kwargs)
 
     return wrapper
-    
+
 class DfColumn:
     def __init__(self, name: str, dtype: str, **kwargs: dict):
         self.name = name
@@ -44,7 +44,7 @@ class DfColumn:
         result = {**result, **self.kwargs}
         return result
 
-class ComputedColumn:
+class ComputedColumn(DfColumn):
     def __init__(self, name: str, dtype: str, col_val: Column):
         self.name = name
         self.dtype = dtype
@@ -62,7 +62,7 @@ class ComputedColumn:
         }
         return result
 
-class InvocationColumn:
+class InvocationColumn(DfColumn):
     def __init__(self, name: str, dtype: str, invk: Invocation):
         self.name = name
         self.dtype = dtype
@@ -81,6 +81,9 @@ class InvocationColumn:
         combined = {**result, **self.invocation.params}
 
         return combined
+    
+    def to_code(self):
+        pass
 
 class DfSchema:
     def __init__(self):

@@ -38,8 +38,9 @@ class SchemaBuilder:
                 col = InvocationColumn(name, dtype, col_value)
                 self.schema.add_column(col)
         else:
-            return self.build_from_dict(name, dtype, kwargs)
+            self.build_from_dict(name, dtype, kwargs)
 
+        return self
 
     def gen_df(self, row_count: int):
         df = self.parrot.empty_df(row_count)

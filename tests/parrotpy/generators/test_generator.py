@@ -35,17 +35,18 @@ def sb(parrot):
 
 def test_polymorphism(sb):
     n = 5
-    sb.build_column("u1", "double", gen="uniform", seed=111)
-    sb.build_column("u2", "double", PF.stats.uniform(seed=123))
-    sb.build_column("u3", "double", PG.stats.uniform(min_value=100, max_value=1000))
-    sb.gen_df(n).show(n, False)
+    (sb.build_column("u1", "double", gen="uniform", seed=111)
+        .build_column("u2", "double", PF.stats.uniform(seed=123))
+        .build_column("u3", "double", PG.stats.uniform(min_value=100, max_value=1000))
+        .gen_df(n)
+        .show(n, False)
+    )
     pprint(sb.schema.to_dict())
 
 def test_wrap(sb):
     n = 3
-    wrapped_fn = snapshot(PF.stats.uniform)
-
-    sb.build_column("u1", "double", wrapped_fn(seed=1))
+    uniform_ss = snapshot(PF.stats.uniform)
+    sb.build_column("u1", "array<double>", uniform_ss(3,seed=1))
     sb.gen_df(n).show(n, False)
     pprint(sb.schema.to_dict())
 
