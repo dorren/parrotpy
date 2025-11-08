@@ -1,6 +1,6 @@
 from pyspark.sql import Column, DataFrame
 
-from .utils import Invocation
+from .utils import Snapshot
 
 class DfColumn:
     def __init__(self, name: str, dtype: str, **kwargs: dict):
@@ -39,23 +39,22 @@ class ComputedColumn(DfColumn):
         }
         return result
 
-class InvocationColumn(DfColumn):
-    def __init__(self, name: str, dtype: str, invk: Invocation):
+class SnapshotColumn(DfColumn):
+    def __init__(self, name: str, dtype: str, ss: Snapshot):
         self.name = name
         self.dtype = dtype
-        self.invocation = invk
+        self.snapshot = ss
 
     def generate(self, df):
-        df = df.withColumn(self.name, self.invocation.fn_result.cast(self.dtype))
+        df = df.withColumn(self.name, self.snapshot.result.cast(self.dtype))
         return df
     
     def to_dict(self):
         result = {
             "name": self.name,
-            "type": self.dtype,
-            "gen": self.invocation.fn_path
+            "type": self.dtype
         }
-        combined = {**result, **self.invocation.params}
+        combined = {**result, **self.snapshot.fn_params}
 
         return combined
     

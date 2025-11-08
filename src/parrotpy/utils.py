@@ -3,22 +3,32 @@ from typing import Any
 from dataclasses import dataclass
 
 @dataclass
-class Invocation:
+class Snapshot:
     """ 
-        fn_path: module path, like "parrotpy.generators.stats.normal"
+        fn_module: module path, like "parrotpy.generators.stats.normal"
+        fn_name: function name.
         fn_result: original function call result, 
         params: parameters used by the function call.
     """
-    fn_path: str
-    fn_result: Any
-    params: dict
+    fn_module: str
+    fn_name: str
+    fn_params: dict
+    result: Any
+
+    def to_dict(self):
+        return {
+            "fn_path": self.fn_module + "." + self.fn_name,
+            "fn_params": self.fn_kwargs
+        }
 
 def snapshot(func):
-    """ Decorator that captures function path, result, and parameter signatures """
+    """ Decorator that captures function path, parameter signatures, and function result """
     @wraps(func)
     def wrapper(*args, **kwargs):
-        fn_path = f"{func.__module__}.{func.__name__}"
-        result = func(*args, **kwargs)
-        return Invocation(fn_path, result, kwargs)
+        if len(args) > 0:
+            raise ValueError("Please use named parameters only. like param1=123")
 
-    return wrapper
+        result = func(*args, **kwargs)
+        return Snapshot(func.__module__, func.__name__, kwargs, result)
+
+    return wrapper 

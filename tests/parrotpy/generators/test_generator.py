@@ -50,3 +50,9 @@ def test_wrap(sb):
     sb.gen_df(n).show(n, False)
     pprint(sb.schema.to_dict())
 
+def test_wrap_inline(sb):
+    n = 2
+    sb.build_column("u1", "array<double>", snapshot(PF.stats.uniform)(3,seed=1))
+    df = sb.gen_df(n)
+    assert(df.count() == n)
+    

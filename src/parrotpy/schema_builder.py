@@ -1,7 +1,7 @@
 from typing import Any
 
 from parrotpy.generators.stats import normal
-from .schema import DfSchema, ComputedColumn, Invocation, InvocationColumn
+from .schema import DfSchema, ComputedColumn, Snapshot, SnapshotColumn
 
 class SchemaBuilder:
     def __init__(self, parrot):
@@ -13,7 +13,7 @@ class SchemaBuilder:
         if gen_fn:
             del kwargs["gen"]
         invk_res = normal(**kwargs)  # TODO, call fn by name
-        col = InvocationColumn(name, dtype, invk_res)
+        col = SnapshotColumn(name, dtype, invk_res)
         self.schema.add_column(col)
 
         return self
@@ -34,8 +34,8 @@ class SchemaBuilder:
             if type(col_value).__name__ == "Column":
                 col = ComputedColumn(name, dtype, col_value)
                 self.schema.add_column(col)
-            elif type(col_value) is Invocation:
-                col = InvocationColumn(name, dtype, col_value)
+            elif type(col_value) is Snapshot:
+                col = SnapshotColumn(name, dtype, col_value)
                 self.schema.add_column(col)
         else:
             self.build_from_dict(name, dtype, kwargs)

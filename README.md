@@ -29,11 +29,28 @@ cust_schema = (pr
 pr.generate(n=100, schema=cust_schema)
 ```
 
+Alternatively,
+```python
+cust_schema = (pr
+  .schema_builder()
+  .build_column("id",         "int", PF.auto_increment, start=10000, step=3)
+  .build_column("name",       "str", PF.name)
+  .build_column("address",    "str", PF.address)
+  .build_column("birth_year", "int", PF.stats.uniform, min=1925, max=2025)
+)
+```
+
 Main flows:
 * Use schema builder to write python code to generate DF.
 * Analyze DF to generate json config file.
 * Analyze DF to generate python file.
 * From Yaml to generate python file.
+
+```python
+df_spec = schema_builder().build_column(...).spec
+df_spec.to_json()
+df_spec.to_code()
+```
 
 ```shell
 parrot analyze customers.df   --output customers.json
