@@ -1,7 +1,8 @@
 from typing import Any
 
-from parrotpy.generators.stats import normal
+from parrotpy.functions.stats import normal
 from .schema import DfSchema, ComputedColumn, Snapshot, SnapshotColumn
+from .utils import snapshot
 
 class SchemaBuilder:
     def __init__(self, parrot):
@@ -12,8 +13,8 @@ class SchemaBuilder:
         gen_fn = kwargs.get("gen")
         if gen_fn:
             del kwargs["gen"]
-        invk_res = normal(**kwargs)  # TODO, call fn by name
-        col = SnapshotColumn(name, dtype, invk_res)
+        fn_ss = snapshot(normal)(**kwargs)  # TODO, call fn by name
+        col = SnapshotColumn(name, dtype, fn_ss)
         self.schema.add_column(col)
 
         return self
@@ -29,7 +30,6 @@ class SchemaBuilder:
         Returns:
             Column: Spark Column.
         """
-        print(f"build_column() col: {col_value}, kw: {kwargs}")
         if col_value is not None:
             if type(col_value).__name__ == "Column":
                 col = ComputedColumn(name, dtype, col_value)

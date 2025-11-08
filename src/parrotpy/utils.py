@@ -1,6 +1,18 @@
 from functools import wraps
+import importlib
 from typing import Any
 from dataclasses import dataclass
+import logging
+
+def fn_path(func: callable):
+    return f"{func.__module__}.{func.__name__}"
+
+def get_fn(fn_path: str):
+    """ get function reference from path """
+    mod_name, name = fn_path.rsplit(".", 1)
+    mod = importlib.import_module(mod_name)
+    fn = getattr(mod, name)
+    return fn
 
 @dataclass
 class Snapshot:
@@ -18,7 +30,7 @@ class Snapshot:
     def to_dict(self):
         return {
             "fn_path": self.fn_module + "." + self.fn_name,
-            "fn_params": self.fn_kwargs
+            "fn_params": self.fn_params
         }
 
 def snapshot(func):
@@ -26,6 +38,10 @@ def snapshot(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if len(args) > 0:
+            logging.error("""
+                Because column building code may be converted to json config file, 
+                for clarity, only named parameters are allowed, like param1=123.
+            """)
             raise ValueError("Please use named parameters only. like param1=123")
 
         result = func(*args, **kwargs)

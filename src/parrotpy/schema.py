@@ -54,7 +54,7 @@ class SnapshotColumn(DfColumn):
             "name": self.name,
             "type": self.dtype
         }
-        combined = {**result, **self.snapshot.fn_params}
+        combined = {**result, **self.snapshot.to_dict()}
 
         return combined
     
