@@ -24,31 +24,15 @@ def test_ks_test():
 
 def test_df(parrot):
     n = 1000
-    dists = ["norm", "uniform", "expon"]
     sb = (parrot.schema_builder()
         .build_column("u_nums", "double", uniform(n=1, min_value=0, max_value=100))
         .build_column("n_nums", "double", normal(n=1, mean=10, stddev=2))
     )
     df = sb.gen_df(n)
-
     anlz = parrot.analyzer()
 
     result = anlz.analyze(df, "u_nums")
-    print(result)
     assert(result["distribution"] == "uniform")
     
     result = anlz.analyze(df, "n_nums")
-    print(result)
     assert(result["distribution"] == "norm")
-
-    # nums = df.select("u_nums").rdd.map(lambda row: row[0]).collect()
-    # f = Fitter(nums, distributions=dists)
-    # f.fit()
-    # dist_name = list(f.get_best())[0]
-    # print(dist_name)
-
-    # nums = df.select("n_nums").rdd.map(lambda row: row[0]).collect()
-    # f = Fitter(nums, distributions=dists)
-    # f.fit()
-    # dist_name = list(f.get_best())[0]
-    # print(dist_name)
