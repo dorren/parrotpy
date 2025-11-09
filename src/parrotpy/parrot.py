@@ -3,6 +3,7 @@ from pyspark.sql import SparkSession
 from typing import Any
 
 from .schema_builder import SchemaBuilder
+from .analyzer import Analyzer
 
 class Context(UserDict):
     def register(name: str, fn:callable):
@@ -34,5 +35,7 @@ class Parrot:
     def schema_builder(self):
         return SchemaBuilder(self)
     
+    def analyzer(self) -> Analyzer:
+        return Analyzer()
 
 

@@ -13,7 +13,6 @@ def test_call_by_name(spark):
 
 @pytest.fixture
 def sb(parrot):
-    ''' schema_builder() '''
     return parrot.schema_builder()
 
 def test_polymorphism(sb):

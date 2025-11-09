@@ -25,7 +25,7 @@ class SchemaBuilder:
         Args:
             name (str): Column name.
             dtype (str): Data type of the column.
-            attrs (dict): Attributes for the generator.
+            attrs (dict): Attributes for the value generating function.
 
         Returns:
             Column: Spark Column.
