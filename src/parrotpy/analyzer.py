@@ -83,7 +83,7 @@ class Analyzer:
         return data_type in num_types
 
     def analyze_df(self, df: DataFrame):
-        sb = self.parrot.schema_builder()
+        builder = self.parrot.df_builder()
 
         for field in df.schema.fields:
             col_name = field.name
@@ -92,10 +92,10 @@ class Analyzer:
 
             if self.is_numeric(data_type):
                 dist_attrs = self.analyze_numeric_column(df, col_name)
-                sb.build_column(col_name, data_type, **dist_attrs)
+                builder.build_column(col_name, data_type, **dist_attrs)
             else:
                 logging.info("unimplemented")
 
-        return sb.schema
+        return builder.schema
 
         

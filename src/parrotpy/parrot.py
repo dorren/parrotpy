@@ -2,7 +2,7 @@ from pyspark.sql import SparkSession
 from typing import Any
 
 import parrotpy.functions as PF
-from .schema_builder import SchemaBuilder
+from .df_builder import DfBuilder
 from .analyzer import Analyzer
 from .function_map import FunctionMap
 
@@ -28,8 +28,8 @@ class Parrot:
         df = self.spark.range(n).drop("id")
         return df
     
-    def schema_builder(self):
-        return SchemaBuilder(parrot=self)
+    def df_builder(self):
+        return DfBuilder(parrot=self)
     
     def analyzer(self) -> Analyzer:
         return Analyzer(parrot=self)

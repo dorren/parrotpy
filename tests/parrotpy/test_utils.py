@@ -12,27 +12,27 @@ def test_call_by_name(spark):
     print(fn(n=3, min_value=10, max_value=100))
 
 @pytest.fixture
-def sb(parrot):
-    return parrot.schema_builder()
+def builder(parrot):
+    return parrot.df_builder()
 
-def test_polymorphism(sb):
+def test_polymorphism(builder):
     n = 5
-    ( sb.build_column("u1", "double", distribution="uniform", seed=111)
+    ( builder.build_column("u1", "double", distribution="uniform", seed=111)
         .build_column("u2", "double", PF.stats.uniform(seed=123))
         .gen_df(n)
         .show(n, False)
     )
-    pprint(sb.schema.to_dict())
+    pprint(builder.schema.to_dict())
 
-def test_wrap(sb):
+def test_wrap(builder):
     n = 3
     uniform_ss = snapshot(PF.stats.uniform)
-    sb.build_column("u1", "array<double>", uniform_ss(n=3,seed=1))
-    sb.gen_df(n).show(n, False)
-    pprint(sb.schema.to_dict())
+    builder.build_column("u1", "array<double>", uniform_ss(n=3,seed=1))
+    builder.gen_df(n).show(n, False)
+    pprint(builder.schema.to_dict())
 
-def test_wrap_inline(sb):
+def test_wrap_inline(builder):
     n = 2
-    sb.build_column("u1", "array<double>", snapshot(PF.stats.uniform)(n=3,seed=1))
-    df = sb.gen_df(n)
+    builder.build_column("u1", "array<double>", snapshot(PF.stats.uniform)(n=3,seed=1))
+    df = builder.gen_df(n)
     assert(df.count() == n)

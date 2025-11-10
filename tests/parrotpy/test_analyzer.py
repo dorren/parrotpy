@@ -11,11 +11,11 @@ from parrotpy.analyzer import Analyzer
 @pytest.fixture
 def nums_df(parrot):
     n = 1000
-    sb = (parrot.schema_builder()
+    builder = (parrot.df_builder()
         .build_column("u_nums", "double", uniform(n=1, min_value=0, max_value=100))
         .build_column("n_nums", "double", normal(n=1, mean=10, std_dev=2))
     )
-    df = sb.gen_df(n)
+    df = builder.gen_df(n)
     return df
 
 def test_ks_test():

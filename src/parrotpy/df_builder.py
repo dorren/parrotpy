@@ -4,7 +4,7 @@ from parrotpy.functions.stats import normal
 from .schema import DfSchema, ComputedColumn, Snapshot, SnapshotColumn
 from .utils import snapshot
 
-class SchemaBuilder:
+class DfBuilder:
     def __init__(self, parrot):
         self.parrot = parrot
         self.schema = DfSchema()
