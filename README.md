@@ -20,8 +20,7 @@ from parrotpy import functions as PF
 
 parrot = Parrot(seed=123)
 
-cust_schema = (pr
-  .df_builder()
+cust_schema = (parrot.df_builder()
   .build_column("id",         "int", PF.auto_increment(start=10000, step=3))
   .build_column("name",       "str", PF.name())
   .build_column("address",    "str", PF.address())
