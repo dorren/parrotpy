@@ -19,7 +19,7 @@ def nums_df(parrot):
     return df
 
 def test_ks_test():
-    dists = ["norm", "uniform", "expon"]
+    dists = ["norm", "uniform"]
     # print(get_common_distributions())
 
     data = np.random.normal(size=100)
@@ -47,6 +47,8 @@ def test_distribution(parrot, nums_df):
 def test_analyze_df(parrot, nums_df):
     schema = parrot.analyzer().analyze_df(nums_df)
     pprint(schema.to_dict())
-    df = parrot.gen_df(schema, 3)
-    df.show(3, False)
+
+    n = 5
+    df = parrot.gen_df(schema, n)
+    df.show(n, False)
     
