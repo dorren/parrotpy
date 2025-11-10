@@ -16,7 +16,7 @@ class DfColumn:
         result = {
             "name": self.name,
             "type": self.dtype,
-            "gen":  self.gen
+            "gen":  None
         }
         result = {**result, **self.kwargs}
         return result
@@ -35,7 +35,7 @@ class ComputedColumn(DfColumn):
         result = {
             "name": self.name,
             "type": self.dtype,
-            "gen":  'TBD'
+            "gen":  None
         }
         return result
 
@@ -46,7 +46,8 @@ class SnapshotColumn(DfColumn):
         self.snapshot = ss
 
     def generate(self, df):
-        df = df.withColumn(self.name, self.snapshot.result.cast(self.dtype))
+        col_value = self.snapshot.invoke()
+        df = df.withColumn(self.name, col_value.cast(self.dtype))
         return df
     
     def to_dict(self):

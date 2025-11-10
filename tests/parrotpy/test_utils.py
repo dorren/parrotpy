@@ -17,7 +17,7 @@ def sb(parrot):
 
 def test_polymorphism(sb):
     n = 5
-    ( sb.build_column("u1", "double", gen="uniform", seed=111)
+    ( sb.build_column("u1", "double", distribution="uniform", seed=111)
         .build_column("u2", "double", PF.stats.uniform(seed=123))
         .gen_df(n)
         .show(n, False)

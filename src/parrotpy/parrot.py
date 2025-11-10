@@ -1,24 +1,20 @@
-from collections import UserDict
 from pyspark.sql import SparkSession
 from typing import Any
 
+import parrotpy.functions as PF
 from .schema_builder import SchemaBuilder
 from .analyzer import Analyzer
-
-class Context(UserDict):
-    def register(name: str, fn:callable):
-        super().__setitem__(name, fn)
+from .function_map import FunctionMap
 
 class Parrot:
     def __init__(self, spark: SparkSession):
         self.spark = spark
+        self._bootup()
 
-        # lib_name = __package__  # parrotpy
-        # modules = ["common", "stats"]
-        # for mod in modules:
-        #     mod_name = f"{lib_name}.{mod}"
-        #     setattr(self, mod, __import__(mod_name, fromlist=[""]))
-
+    def _bootup(self):
+        self.fn_map = FunctionMap()
+        self.fn_map.register("distribution.norm",    PF.stats.normal)
+        self.fn_map.register("distribution.uniform", PF.stats.uniform)
 
     def empty_df(self, n: int):
         """Create an empty dataframe with n rows.
@@ -33,9 +29,15 @@ class Parrot:
         return df
     
     def schema_builder(self):
-        return SchemaBuilder(self)
+        return SchemaBuilder(parrot=self)
     
     def analyzer(self) -> Analyzer:
-        return Analyzer()
+        return Analyzer(parrot=self)
 
+    def gen_df(self, schema, n: int):
+        df = self.empty_df(n)
 
+        for col in schema.columns:
+            df = col.generate(df)
+
+        return df

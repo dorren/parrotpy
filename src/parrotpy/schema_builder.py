@@ -10,12 +10,21 @@ class SchemaBuilder:
         self.schema = DfSchema()
 
     def build_from_dict(self, name: str, dtype: str, kwargs: dict):
-        gen_fn = kwargs.get("gen")
-        if gen_fn:
-            del kwargs["gen"]
-        fn_ss = snapshot(normal)(**kwargs)  # TODO, call fn by name
-        col = SnapshotColumn(name, dtype, fn_ss)
-        self.schema.add_column(col)
+        fn_map = self.parrot.fn_map
+        fn = fn_map.match(kwargs)
+        if fn:
+            del kwargs["distribution"]
+            fn_ss = snapshot(fn)(**kwargs)
+            col = SnapshotColumn(name, dtype, fn_ss)
+            self.schema.add_column(col)
+        else:
+            raise ValueError(f"Can find function for given attributes {kwargs}")
+
+        # if "gen" in kwargs:
+        #     del kwargs["gen"]
+        #     fn_ss = snapshot(normal)(**kwargs)  # TODO, call fn by name
+        #     col = SnapshotColumn(name, dtype, fn_ss)
+        #     self.schema.add_column(col)
 
         return self
     

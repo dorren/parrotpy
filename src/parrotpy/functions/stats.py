@@ -38,10 +38,10 @@ def normal_1(mean: float=0.0, stddev: float=1.0, seed:int=None, to_int:bool=Fals
 
     return value
 
-def normal(n: int = 1, mean: float = 0.0, stddev: float = 1.0, seed: int = None, to_int: bool = False) -> Column:
+def normal(n: int = 1, mean: float = 0.0, std_dev: float = 1.0, seed: int = None, to_int: bool = False) -> Column:
     """ generate single or array of normal distribution sample values
     """
-    fn = partial(normal_1, mean=mean, stddev=stddev, to_int=to_int)
+    fn = partial(normal_1, mean=mean, stddev=std_dev, to_int=to_int)
     col_val = rand_elem_or_array(n, fn, seed)
     return col_val
 

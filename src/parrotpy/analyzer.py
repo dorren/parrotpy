@@ -2,6 +2,7 @@ from collections import Counter
 import logging
 import numpy as np
 from pyspark.sql import DataFrame
+from pyspark.sql.types import StructField
 from fitter import Fitter
 from typing import List
 
@@ -33,23 +34,8 @@ class Analyzer:
     default_sample_size = 200
     default_distributions = ["norm", "uniform"]
 
-    def __init__(self):
-        pass
-
-    def analyze(self, 
-                df: DataFrame, 
-                col_name: str,
-                sample_size:    int = default_sample_size, 
-                distributions: list = default_distributions):
-        total = df.count()
-        sample_size = min(total, sample_size)
-        logging.info(f"sample size for {col_name}: {sample_size}")
-
-        fraction = 1.0 * sample_size / total
-        df = df.select(col_name).sample(fraction=fraction)
-        nums = df.rdd.map(lambda row: row[0]).collect()
-        dist_attrs = self.infer_distribution(nums, distributions)
-        return dist_attrs
+    def __init__(self, parrot):
+        self.parrot = parrot
 
 
     def infer_distribution(self, nums: list, distributions: List[str]):
@@ -76,3 +62,40 @@ class Analyzer:
         
     def categorize_text(self, words: list):
         pass
+
+    def analyze_numeric_column(self, 
+                df: DataFrame, 
+                col_name: str,
+                sample_size:    int = default_sample_size, 
+                distributions: list = default_distributions):
+        total = df.count()
+        sample_size = min(total, sample_size)
+        logging.info(f"sample size for {col_name}: {sample_size}")
+
+        fraction = 1.0 * sample_size / total
+        df = df.select(col_name).sample(fraction=fraction)
+        nums = df.rdd.map(lambda row: row[0]).collect()
+        dist_attrs = self.infer_distribution(nums, distributions)
+        return dist_attrs
+
+    def is_numeric(self, data_type: str):
+        num_types = ["int", "double", "array<int>", "array<double>"]
+        return data_type in num_types
+
+    def analyze_df(self, df: DataFrame):
+        sb = self.parrot.schema_builder()
+
+        for field in df.schema.fields:
+            col_name = field.name
+            data_type = field.dataType.simpleString()
+            col_nullable = field.nullable
+
+            if self.is_numeric(data_type):
+                dist_attrs = self.analyze_numeric_column(df, col_name)
+                sb.build_column(col_name, data_type, **dist_attrs)
+            else:
+                logging.info("unimplemented")
+
+        return sb.schema
+
+        

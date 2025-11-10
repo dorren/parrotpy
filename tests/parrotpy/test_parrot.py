@@ -1,8 +1,7 @@
 import pytest
 from pyspark.sql import Column
 
-from parrotpy import Parrot
-from helpers.spark_helpers import spark
+from parrotpy.parrot import Parrot
 
 
 @pytest.mark.skip(reason="experimental")
