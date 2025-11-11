@@ -12,9 +12,9 @@ class Parrot:
         self._bootup()
 
     def _bootup(self):
-        self.fn_map = EntityMap()
-        self.fn_map.register("distribution.norm",    PF.stats.normal)
-        self.fn_map.register("distribution.uniform", PF.stats.uniform)
+        self.entity_map = EntityMap()
+        self.entity_map.register("normal distribution",  PF.stats.normal)
+        self.entity_map.register("uniform distribution", PF.stats.uniform)
 
     def empty_df(self, n: int):
         """Create an empty dataframe with n rows.
@@ -28,7 +28,7 @@ class Parrot:
         df = self.spark.range(n).drop("id")
         return df
     
-    def df_builder(self):
+    def df_builder(self) -> DfBuilder:
         return DfBuilder(parrot=self)
     
     def analyzer(self) -> Analyzer:

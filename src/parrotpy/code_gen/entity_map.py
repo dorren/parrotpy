@@ -16,9 +16,9 @@ class EntityMap(UserDict):
             dist_type = analyze_result["distribution"]
 
             if dist_type == "norm":
-                fn = self["distribution.norm"]
+                fn = self["normal distribution"]
             elif dist_type == "uniform":
-                fn = self["distribution.uniform"]
+                fn = self["uniform distribution"]
             
             return fn
         else:

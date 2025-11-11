@@ -10,8 +10,8 @@ class DfBuilder:
         self.df_spec = DfSpec()
 
     def build_from_dict(self, name: str, dtype: str, kwargs: dict):
-        fn_map = self.parrot.fn_map
-        fn = fn_map.match(kwargs)
+        entity_map = self.parrot.entity_map
+        fn = entity_map.match(kwargs)
         if fn:
             del kwargs["distribution"]
             fn_ss = snapshot(fn)(**kwargs)

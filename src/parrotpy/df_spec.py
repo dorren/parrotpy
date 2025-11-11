@@ -3,9 +3,10 @@ from pyspark.sql import Column, DataFrame
 from .utils import Snapshot
 
 class ColumnSpec:
-    def __init__(self, name: str, data_type: str, **kwargs: dict):
+    def __init__(self, name: str, data_type: str, entity_type: str="unknown", **kwargs: dict):
         self.name = name
         self.data_type = data_type
+        self.entity_type = entity_type
         self.kwargs = kwargs
 
     def generate(self, df: DataFrame) -> DataFrame:
@@ -16,6 +17,7 @@ class ColumnSpec:
         result = {
             "name": self.name,
             "type": self.data_type,
+            "entity_type": self.entity_type,
             "gen":  None
         }
         result = {**result, **self.kwargs}
