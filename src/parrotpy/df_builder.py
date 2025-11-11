@@ -1,13 +1,13 @@
 from typing import Any
 
 from parrotpy.functions.stats import normal
-from .schema import DfSchema, ComputedColumn, Snapshot, SnapshotColumn
+from .df_spec import DfSpec, ComputedColumn, Snapshot, SnapshotColumn
 from .utils import snapshot
 
 class DfBuilder:
     def __init__(self, parrot):
         self.parrot = parrot
-        self.schema = DfSchema()
+        self.df_spec = DfSpec()
 
     def build_from_dict(self, name: str, dtype: str, kwargs: dict):
         fn_map = self.parrot.fn_map
@@ -16,7 +16,7 @@ class DfBuilder:
             del kwargs["distribution"]
             fn_ss = snapshot(fn)(**kwargs)
             col = SnapshotColumn(name, dtype, fn_ss)
-            self.schema.add_column(col)
+            self.df_spec.add_column(col)
         else:
             raise ValueError(f"Can find function for given attributes {kwargs}")
 
@@ -42,19 +42,14 @@ class DfBuilder:
         if col_value is not None:
             if type(col_value).__name__ == "Column":
                 col = ComputedColumn(name, dtype, col_value)
-                self.schema.add_column(col)
+                self.df_spec.add_column(col)
             elif type(col_value) is Snapshot:
                 col = SnapshotColumn(name, dtype, col_value)
-                self.schema.add_column(col)
+                self.df_spec.add_column(col)
         else:
             self.build_from_dict(name, dtype, kwargs)
 
         return self
 
     def gen_df(self, row_count: int):
-        df = self.parrot.empty_df(row_count)
-        
-        for col in self.schema.columns:
-            df = col.generate(df)
-
-        return df
+        return self.parrot.gen_df(self.df_spec, row_count)

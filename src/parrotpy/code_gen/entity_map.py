@@ -1,6 +1,12 @@
 from collections import UserDict
 
-class FunctionMap(UserDict):
+
+class EntityMap(UserDict):
+    """ map entity type to the value generating function. For example:
+
+        entity type "person" would be mapped to parrotpy.functions.name()
+        entity type "uniform distribution" would be mapped to parrotpy.functions.stats.uniform()
+    """
     def register(self, name: str, fn:callable):
         super().__setitem__(name, fn)
 

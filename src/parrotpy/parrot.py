@@ -4,7 +4,7 @@ from typing import Any
 import parrotpy.functions as PF
 from .df_builder import DfBuilder
 from .analyzer import Analyzer
-from .function_map import FunctionMap
+from .code_gen.entity_map import EntityMap
 
 class Parrot:
     def __init__(self, spark: SparkSession):
@@ -12,7 +12,7 @@ class Parrot:
         self._bootup()
 
     def _bootup(self):
-        self.fn_map = FunctionMap()
+        self.fn_map = EntityMap()
         self.fn_map.register("distribution.norm",    PF.stats.normal)
         self.fn_map.register("distribution.uniform", PF.stats.uniform)
 
@@ -34,10 +34,10 @@ class Parrot:
     def analyzer(self) -> Analyzer:
         return Analyzer(parrot=self)
 
-    def gen_df(self, schema, n: int):
+    def gen_df(self, df_spec, n: int):
         df = self.empty_df(n)
 
-        for col in schema.columns:
+        for col in df_spec.columns:
             df = col.generate(df)
 
         return df

@@ -1,4 +1,4 @@
-from .function_map import FunctionMap
+from .code_gen.entity_map import EntityMap
 from .parrot import Parrot
 
-__all__ = ["FunctionMap", "Parrot"]
+__all__ = ["Parrot"]

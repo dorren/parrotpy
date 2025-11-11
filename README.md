@@ -19,8 +19,7 @@ from parrotpy import Parrot
 from parrotpy import functions as PF
 
 parrot = Parrot(seed=123)
-
-cust_schema = (parrot.df_builder()
+builder = (parrot.df_builder()
   .build_column("id",         "int", PF.auto_increment(start=10000, step=3))
   .build_column("name",       "str", PF.name())
   .build_column("address",    "str", PF.address())
@@ -28,7 +27,7 @@ cust_schema = (parrot.df_builder()
   .build_column("salary",     "int", PF.stats.normal(mean=70000, std_dev=10000))
 )
 
-test_df = pr.generate(schema=cust_schema, n=100)
+df = builder.generate(n=100)
 ```
 
 
@@ -41,7 +40,7 @@ df_spec = parrot.analyzer().analyze_df(src_df)
 
 # optional step, convert to json.
 json_str = json.dumps(df_spec.to_dict())
-df_spec = parrot.df_builder().load_json_spec(json_str)
+df_spec = parrot.load_df_spec(json_str)
 
 # generate 100 rows
 df = parrot.gen_df(df_spec, 100)

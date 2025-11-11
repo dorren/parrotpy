@@ -45,10 +45,10 @@ def test_distribution(parrot, nums_df):
     assert(result["distribution"] == "norm")
 
 def test_analyze_df(parrot, nums_df):
-    schema = parrot.analyzer().analyze_df(nums_df)
-    pprint(schema.to_dict())
+    spec = parrot.analyzer().analyze_df(nums_df)
+    pprint(spec.to_dict())
 
     n = 5
-    df = parrot.gen_df(schema, n)
+    df = parrot.gen_df(spec, n)
     df.show(n, False)
     

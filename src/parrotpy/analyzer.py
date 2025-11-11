@@ -96,6 +96,6 @@ class Analyzer:
             else:
                 logging.info("unimplemented")
 
-        return builder.schema
+        return builder.df_spec
 
         

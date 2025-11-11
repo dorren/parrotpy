@@ -1,12 +1,12 @@
 import pytest
 from pyspark.sql import Column
 
-from parrotpy.parrot import Parrot, FunctionMap
+from parrotpy.parrot import Parrot, EntityMap
 from parrotpy.functions.stats import normal, uniform
 
 
 def test_fn_map():
-    fm = FunctionMap()
+    fm = EntityMap()
     fm.register("distribution.norm", normal)
     fm.register("distribution.uniform", uniform)
 
