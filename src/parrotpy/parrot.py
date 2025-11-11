@@ -9,12 +9,7 @@ from .code_gen.entity_map import EntityMap
 class Parrot:
     def __init__(self, spark: SparkSession):
         self.spark = spark
-        self._bootup()
-
-    def _bootup(self):
-        self.entity_map = EntityMap()
-        self.entity_map.register("normal distribution",  PF.stats.normal)
-        self.entity_map.register("uniform distribution", PF.stats.uniform)
+        self.entity_map = EntityMap.default()
 
     def empty_df(self, n: int):
         """Create an empty dataframe with n rows.

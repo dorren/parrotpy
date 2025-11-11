@@ -20,37 +20,6 @@ def src_code():
             return builder.gen_df(n)
         """)
 
-@pytest.fixture
-def df_spec1() -> DfSpec:
-    df_spec = DfSpec()
-    # (df_spec
-    #     .add_column(ColumnSpec("name", "str",     **{"entity_type": "person"}))
-    #     .add_column(ColumnSpec("age", "int",      **{"entity_type": "uniform distribution", "mean": 30, "std_dev": 20}))
-    #     .add_column(ColumnSpec("location", "str", **{"entity_type": "choices", "elements": ["NYC", "London", "Paris"]}))
-    # )
-    (df_spec
-        .add_column(ColumnSpec("name", "str",     **{"length": 3}))
-        .add_column(ColumnSpec("age", "int",      **{"mean": 30, "std_dev": 20}))
-        .add_column(ColumnSpec("location", "str", **{"elements": ["NYC", "London", "Paris"]}))
-    )
-    return df_spec
-
-def test_transform2(src_code, df_spec1):
-    original_tree = ast.parse(src_code)
-    code_gen = ColumnCodeGen(target_name="builder", call_name="build_column", df_spec=df_spec1)
-    new_tree = code_gen.visit(original_tree)
-
-    print("--- Injected Code (Chained) ---")
-    try:
-        injected_source = ast.unparse(new_tree)
-        mode = black.Mode(target_versions={black.TargetVersion.PY311}, line_length=80)
-        fmt_code = black.format_str(injected_source, mode=mode)
-        
-        print(fmt_code.strip())
-    except AttributeError:
-        print("ast.unparse is not available in your Python version. Cannot display source.")
-
-
 def test_import(src_code):
     my_import = ast.ImportFrom(
         module= "parrotpy",

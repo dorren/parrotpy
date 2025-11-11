@@ -3,6 +3,21 @@ import black
 import textwrap
 from typing import List, Any
 from ..df_spec import DfSpec
+from .entity_map import EntityMap
+from ..utils import fn_path
+
+def _base_template():
+    return textwrap.dedent("""
+        from parrotpy import Parrot
+
+        def generate_synthetic_data():
+            parrot = Parrot()
+            builder = parrot.df_builder()
+            
+            n = 100
+            print(f"Starting generating {n} rows ...")
+            return builder.gen_df(n)
+        """)
 
 def dict_to_ast_keywords(data_dict):
     """
@@ -36,6 +51,13 @@ def dict_to_ast_keywords(data_dict):
         keywords.append(ast.keyword(arg=key, value=value_node))
     return keywords
 
+def build_import_stmt(fn: callable, alias: str=None):
+    return ast.ImportFrom(
+        module=fn.__module__,
+        names=[ast.alias(name=fn.__name__, asname=None)],
+        level=0
+    )
+
 class ColumnCodeGen(ast.NodeTransformer):
     """
     Generated chained function calls like below:
@@ -51,9 +73,10 @@ class ColumnCodeGen(ast.NodeTransformer):
         self.target_name = target_name
         self.call_name = call_name
         self.df_spec = df_spec
-        self.num_injections = len(df_spec.columns)
+        self.entity_map = EntityMap.default()
+        self.fn_imports = {}
 
-    def _create_chained_call(self, initial_value):
+    def _create_chained_call(self, initial_value, node):
         """
         Creates a single ast.Expr node representing the chained call.
 
@@ -63,6 +86,7 @@ class ColumnCodeGen(ast.NodeTransformer):
         """
         # Start the chain with the initial value (e.g., the 'builder' Name node or an existing call)
         current_chain = initial_value
+        fn_imports = {}
         
         for column_spec in self.df_spec.columns:
             # 1. Create the Attribute node (e.g., current_chain.build_column)
@@ -75,14 +99,26 @@ class ColumnCodeGen(ast.NodeTransformer):
             # 2. Create the Call node (e.g., current_chain.build_column())
             # call_args = self.fn_args[i]
             # print(call_args)
+            column_fn = self.entity_map[column_spec.entity_type]
+            self.fn_imports[fn_path(column_fn)] = build_import_stmt(column_fn)
+
+            fn_name = column_fn.__name__
             ast_kwargs = dict_to_ast_keywords(column_spec.kwargs)
+            fn_call = ast.Expr(
+                    value=ast.Call(
+                        func=ast.Name(id=fn_name, ctx=ast.Load()),
+                        args=ast_kwargs,
+                        keywords=[]
+                    )
+                )
             ast_args = [
                 ast.Constant(value=column_spec.name),
                 ast.Constant(value=column_spec.data_type),
-                *ast_kwargs
+                fn_call
             ]
             current_chain = ast.Call(func=attr, args=ast_args, keywords=[])
-        
+
+
         # 3. Wrap the final call in an Expression node (required for a statement)
         expr = ast.Expr(value=current_chain)
         
@@ -114,7 +150,7 @@ class ColumnCodeGen(ast.NodeTransformer):
                             target_name_node = statement.targets[0] 
                             
                             # Chain the calls onto the RHS value (e.g., DataBuilder())
-                            chained_call_value = self._create_chained_call(statement.value).value
+                            chained_call_value = self._create_chained_call(statement.value, node).value
                             
                             # Create a new Assign node: builder = [Chained Call]
                             new_assign = ast.Assign(targets=[target_name_node], value=chained_call_value)
@@ -128,7 +164,7 @@ class ColumnCodeGen(ast.NodeTransformer):
                              
                              # Get the starting Name node for 'builder'
                              initial_name = ast.Name(id=self.target_name, ctx=ast.Load())
-                             chained_expr = self._create_chained_call(initial_name)
+                             chained_expr = self._create_chained_call(initial_name, node)
                              new_body.append(chained_expr)
                              
                         else:
@@ -137,7 +173,7 @@ class ColumnCodeGen(ast.NodeTransformer):
                             
                             # Get the starting Name node for 'builder'
                             initial_name = ast.Name(id=self.target_name, ctx=ast.Load())
-                            chained_expr = self._create_chained_call(initial_name)
+                            chained_expr = self._create_chained_call(initial_name, node)
                             new_body.append(chained_expr)
                             
                         injected = True
@@ -154,3 +190,36 @@ class ColumnCodeGen(ast.NodeTransformer):
         node.body = new_body
         ast.fix_missing_locations(node)
         return node
+    
+    def add_imports(self, node):
+        # add function imports at the top
+        for import_stmt in self.fn_imports.values():
+            # print(ast.unparse(import_stmt))
+            node.body.insert(0, import_stmt)
+
+        return node
+    
+def build_ast(df_spec: DfSpec):
+    """ build AST node from DfSpec """
+    original_tree = ast.parse(_base_template())
+    code_gen = ColumnCodeGen(target_name="builder", call_name="build_column", df_spec=df_spec)
+    new_tree = code_gen.visit(original_tree)
+    new_tree = code_gen.add_imports(new_tree)
+
+    return new_tree
+
+def beautify_code(code: str):
+    mode = black.Mode(target_versions={black.TargetVersion.PY311}, line_length=80)
+    fmt_code = black.format_str(code, mode=mode)
+
+    return fmt_code
+
+def dfspec2code(df_spec: DfSpec) -> str:
+    """ convert DfSpec to Python code """
+    tree = build_ast(df_spec)
+    generated_code = ast.unparse(tree)
+    code = beautify_code(generated_code)
+
+    return code
+    
+__all__ = ["dfspec2code"]

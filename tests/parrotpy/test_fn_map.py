@@ -7,7 +7,7 @@ from parrotpy.functions.stats import normal, uniform
 
 def test_fn_map():
     fm = EntityMap()
-    fm.register("distribution.norm", normal)
-    fm.register("distribution.uniform", uniform)
+    fm.register("dist.normal", normal)
+    fm.register("dist.uniform", uniform)
 
-    assert("distribution.norm" in fm)
+    assert("dist.normal" in fm)

@@ -1,5 +1,6 @@
 from collections import UserDict
-
+from parrotpy import functions as PF
+# from parrotpy.functions import common as C
 
 class EntityMap(UserDict):
     """ map entity type to the value generating function. For example:
@@ -16,10 +17,20 @@ class EntityMap(UserDict):
             dist_type = analyze_result["distribution"]
 
             if dist_type == "norm":
-                fn = self["normal distribution"]
+                fn = self["dist.normal"]
             elif dist_type == "uniform":
-                fn = self["uniform distribution"]
+                fn = self["dist.uniform"]
             
             return fn
         else:
             raise NotImplementedError(f"no function found for {analyze_result}")
+
+    @classmethod
+    def default(cls):
+        em = cls()
+        em.register("person name",  PF.common.person_name)
+        em.register("choices",      PF.stats.choices)
+        em.register("dist.normal",  PF.stats.normal)
+        em.register("dist.uniform", PF.stats.uniform)
+
+        return em
