@@ -10,8 +10,8 @@ def _base_template():
     return textwrap.dedent("""
         from parrotpy import Parrot
 
-        def generate_synthetic_data():
-            parrot = Parrot()
+        def generate_synthetic_data(spark):
+            parrot = Parrot(spark)
             builder = parrot.df_builder()
             
             n = 100
@@ -123,8 +123,8 @@ class ColumnCodeGen(ast.NodeTransformer):
         expr = ast.Expr(value=current_chain)
         
         # Ensure location data is consistent
-        ast.fix_missing_locations(expr)
-        return expr
+        expr2 = ast.fix_missing_locations(expr)
+        return expr2
 
     def visit_FunctionDef(self, node):
         """
@@ -188,7 +188,7 @@ class ColumnCodeGen(ast.NodeTransformer):
 
         # Update the function's body
         node.body = new_body
-        ast.fix_missing_locations(node)
+        node = ast.fix_missing_locations(node)
         return node
     
     def add_imports(self, node):
@@ -197,6 +197,7 @@ class ColumnCodeGen(ast.NodeTransformer):
             # print(ast.unparse(import_stmt))
             node.body.insert(0, import_stmt)
 
+        node = ast.fix_missing_locations(node)
         return node
     
 def build_ast(df_spec: DfSpec):
@@ -214,7 +215,7 @@ def beautify_code(code: str):
 
     return fmt_code
 
-def dfspec2code(df_spec: DfSpec) -> str:
+def spec2code(df_spec: DfSpec) -> str:
     """ convert DfSpec to Python code """
     tree = build_ast(df_spec)
     generated_code = ast.unparse(tree)
@@ -222,4 +223,19 @@ def dfspec2code(df_spec: DfSpec) -> str:
 
     return code
     
-__all__ = ["dfspec2code"]
+def spec2df(spark, df_spec: DfSpec) -> str:
+    """ convert DfSpec to Python code """
+    tree = build_ast(df_spec)
+    code = ast.unparse(tree)
+    # compile original node doesn't work because it can't handle parentheses 
+    # surrounded expression, so has to parse src code.
+    tree2 = ast.parse(code)
+
+    compiled_code = compile(tree2, filename="<modified_ast>", mode="exec")
+    namespace = {}
+    exec(compiled_code, namespace)
+    gen_fn = namespace["generate_synthetic_data"]
+
+    return gen_fn(spark)
+
+__all__ = ["spec2code", "spec2df"]
