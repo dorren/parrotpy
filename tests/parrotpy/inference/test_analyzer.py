@@ -5,7 +5,8 @@ from fitter import Fitter, get_common_distributions
 from pprint import pprint
 
 from parrotpy.functions.stats import normal, uniform
-from parrotpy.analyzer import Analyzer
+from parrotpy.inference.entity_map import EntityType
+from parrotpy.inference.analyzer import Analyzer
 
 
 @pytest.fixture
@@ -39,16 +40,16 @@ def test_distribution(parrot, nums_df):
     anlz = parrot.analyzer()
 
     result = anlz.analyze_numeric_column(df, "u_nums")
-    assert(result["distribution"] == "uniform")
+    assert(result["entity_type"] == EntityType.DIST_UNIFORM.value)
     
     result = anlz.analyze_numeric_column(df, "n_nums")
-    assert(result["distribution"] == "norm")
+    print(result)
+    assert(result["entity_type"] == EntityType.DIST_NORMAL.value)
 
 def test_analyze_df(parrot, nums_df):
-    spec = parrot.analyzer().analyze_df(nums_df)
-    pprint(spec.to_dict())
+    dfa = parrot.analyzer().analyze_df(nums_df)
+    pprint(dfa.to_dict())
 
-    n = 5
-    df = parrot.gen_df(spec, n)
-    df.show(n, False)
+    df_spec = dfa.to_df_spec()
+    pprint(df_spec.to_dict())
     

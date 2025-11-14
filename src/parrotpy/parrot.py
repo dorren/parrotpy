@@ -3,8 +3,8 @@ from typing import Any
 
 import parrotpy.functions as PF
 from .df_builder import DfBuilder
-from .analyzer import Analyzer
-from .code_gen.entity_map import EntityMap
+from .inference.analyzer import Analyzer
+from .inference.entity_map import EntityMap
 
 class Parrot:
     def __init__(self, spark: SparkSession):

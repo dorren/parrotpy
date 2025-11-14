@@ -1,6 +1,6 @@
 import pytest
 
-from parrotpy.analyzer import NLPSingleton
+from parrotpy.inference.analyzer import NLPSingleton
 
 # test Named Entity Recognition (NER)
   

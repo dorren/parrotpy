@@ -56,6 +56,9 @@ def rand_elem_or_array(n: int, gen_fn, seed=None) -> Column:
     else:
         return rand_array(n, gen_fn, seed)
 
+def nothing(**kwargs) -> Column:
+    return F.lit(None)
+
 __all__ = [
     "auto_increment",
     "rand_str", 

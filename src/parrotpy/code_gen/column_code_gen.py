@@ -3,7 +3,7 @@ import black
 import textwrap
 from typing import List, Any
 from ..df_spec import DfSpec
-from .entity_map import EntityMap
+from ..inference.entity_map import EntityMap
 from ..utils import fn_path
 
 def _base_template():

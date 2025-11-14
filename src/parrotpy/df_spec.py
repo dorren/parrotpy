@@ -17,8 +17,7 @@ class ColumnSpec:
         result = {
             "name": self.name,
             "type": self.data_type,
-            "entity_type": self.entity_type,
-            "gen":  None
+            "entity_type": self.entity_type
         }
         result = {**result, **self.kwargs}
         return result
@@ -34,12 +33,7 @@ class ComputedColumn(ColumnSpec):
         return df
 
     def to_dict(self):
-        result = {
-            "name": self.name,
-            "type": self.data_type,
-            "gen":  None
-        }
-        return result
+        return self.__dict__
 
 class SnapshotColumn(ColumnSpec):
     def __init__(self, name: str, data_type: str, ss: Snapshot):
