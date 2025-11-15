@@ -45,6 +45,8 @@ def snapshot(func):
             """)
             raise ValueError("Please use named parameters only. like param1=123")
 
-        return Snapshot(func.__module__ + "." + func.__name__, kwargs)
+        return Snapshot(fn_path(func), kwargs)
 
-    return wrapper 
+    return wrapper
+
+__all__ = ["fn_path", "get_fn", "Snapshot", "snapshot"]

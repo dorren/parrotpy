@@ -56,6 +56,31 @@ def rand_elem_or_array(n: int, gen_fn, seed=None) -> Column:
     else:
         return rand_array(n, gen_fn, seed)
 
+def date_between(start_date_str:str, end_date_str:str) -> Column:
+    """ generate random dates between the parameters. 
+        date str shall be in "YYYY-MM-DD" format.
+    """
+    start_date = F.lit(start_date_str).cast("date")
+    end_date = F.lit(end_date_str).cast("date")
+    
+    return F.date_add(start_date,
+        (F.round(F.rand() * (F.date_diff(end_date, start_date)))).cast("int")
+    )
+
+def timestamp_between(start_ts_str:str, end_ts_str:str) -> Column:
+    """ generate random dates between the parameters. 
+        date str shall be in "YYYY-MM-DD HH:mm:ss" format.
+    """
+    start_ts = F.lit(start_ts_str).cast("timestamp")
+    end_ts   = F.lit(end_ts_str).cast("timestamp")
+    
+    expr = F.from_unixtime(
+        F.unix_timestamp(start_ts)
+        + (F.rand() * (F.unix_timestamp(end_ts) - F.unix_timestamp(start_ts)))
+    ).cast("timestamp")
+
+    return expr
+
 def nothing(**kwargs) -> Column:
     return F.lit(None)
 
@@ -64,5 +89,8 @@ __all__ = [
     "rand_str", 
     "rand_num_str", 
     "rand_array", 
-    "rand_elem_or_array"
+    "rand_elem_or_array",
+    "date_between",
+    "timestamp_between",
+    "nothing"
 ]

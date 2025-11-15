@@ -3,7 +3,7 @@ import pytest
 from pyspark.sql import functions as F
 from pyspark.testing import assertDataFrameEqual
 
-from parrotpy.functions.core import auto_increment, rand_str, rand_num_str, rand_array
+from parrotpy.functions.core import *
 
 def test_empty_df(parrot):
     n = 10
@@ -46,3 +46,19 @@ def test_license_plate(spark):
     df = df.withColumn("plate", F.concat(rand_str(3), F.lit("-"), rand_num_str(4)))
     df.show(20, False)
     assert df.count() == n
+
+def test_date_between(spark):
+    df = spark.range(10)
+    start_str = "2025-11-14"
+    end_str   = "2026-11-14"
+
+    df = df.withColumn("create_date", date_between(start_str, end_str))
+    assert(df.count() == 10)
+
+def test_timestamp_between(spark):
+    df = spark.range(10)
+    start_str = "2025-11-14 00:00:00"
+    end_str   = "2025-11-15 00:00:00"
+
+    df = df.withColumn("create_time", timestamp_between(start_str, end_str))
+    assert(df.count() == 10)

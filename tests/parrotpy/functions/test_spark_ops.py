@@ -2,13 +2,12 @@ from itertools import accumulate
 import json
 import pytest
 from pprint import pprint
-from pyspark.sql.types import StructType
+from pyspark.sql.types import DateType, TimestampType
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 from random import random
 
 from parrotpy import Parrot
-from parrotpy.functions.core import rand_str, rand_num_str
 from helpers.test_helpers import benchmark
 
 
@@ -82,5 +81,7 @@ def test_fast_row_number(spark):
     )
     
     print(final_df.count())
+
+
 
 

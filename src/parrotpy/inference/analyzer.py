@@ -131,11 +131,11 @@ class Analyzer:
         return dist_attrs
 
     def is_numeric(self, data_type: str):
-        num_types = ["int", "double", "array<int>", "array<double>"]
+        num_types = ["int", "double"] #, "array<int>", "array<double>"]
         return data_type in num_types
 
     def analyze_df(self, df: DataFrame) -> InferredDf:
-        dfa = InferredDf()
+        ifr_df = InferredDf()
 
         for field in df.schema.fields:
             col_name = field.name
@@ -148,10 +148,10 @@ class Analyzer:
                 del dist_attrs[InferredColumn.entity_type_key]
 
                 col = InferredColumn(col_name, data_type, et, **dist_attrs)
-                dfa.add_column(col)
+                ifr_df.add_column(col)
             else:
                 logging.info("unimplemented")
 
-        return dfa
+        return ifr_df
 
         
