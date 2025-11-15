@@ -7,11 +7,11 @@ from fitter import Fitter
 from typing import List
 
 from .entity_map import EntityType, EntityMap
-from ..df_spec import DfSpec, ColumnSpec, ComputedColumn
+from ..df_spec import DfSpec, ComputedColumn
 from .. import functions as PF
     
-class ColumnAnalyzed:
-    data_type_key = "data_type"
+class InferredColumn:
+    data_type_key   = "data_type"
     entity_type_key = "entity_type"
 
     def __init__(self, name: str, data_type: str, entity_type: str="unknown", **kwargs: dict):
@@ -29,11 +29,11 @@ class ColumnAnalyzed:
         result = {**result, **self.kwargs}
         return result      
 
-class DfAnalyzed:
+class InferredDf:
     def __init__(self):
         self.columns = []
     
-    def add_column(self, col: ColumnAnalyzed):
+    def add_column(self, col: InferredColumn):
         self.columns.append(col)
         return self
 
@@ -91,7 +91,7 @@ class Analyzer:
     def infer_distribution(self, nums: list, distributions: List[str]):
         """ get best matched random distribution name and attributes 
         """
-        etk = ColumnAnalyzed.entity_type_key
+        etk = InferredColumn.entity_type_key
 
         f = Fitter(nums, distributions=distributions)
         f.fit()
@@ -134,8 +134,8 @@ class Analyzer:
         num_types = ["int", "double", "array<int>", "array<double>"]
         return data_type in num_types
 
-    def analyze_df(self, df: DataFrame) -> DfAnalyzed:
-        dfa = DfAnalyzed()
+    def analyze_df(self, df: DataFrame) -> InferredDf:
+        dfa = InferredDf()
 
         for field in df.schema.fields:
             col_name = field.name
@@ -144,10 +144,10 @@ class Analyzer:
 
             if self.is_numeric(data_type):
                 dist_attrs = self.analyze_numeric_column(df, col_name)
-                et = dist_attrs.get(ColumnAnalyzed.entity_type_key)
-                del dist_attrs[ColumnAnalyzed.entity_type_key]
+                et = dist_attrs.get(InferredColumn.entity_type_key)
+                del dist_attrs[InferredColumn.entity_type_key]
 
-                col = ColumnAnalyzed(col_name, data_type, et, **dist_attrs)
+                col = InferredColumn(col_name, data_type, et, **dist_attrs)
                 dfa.add_column(col)
             else:
                 logging.info("unimplemented")

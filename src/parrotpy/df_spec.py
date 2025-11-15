@@ -2,27 +2,27 @@ from pyspark.sql import Column, DataFrame
 
 from .utils import Snapshot
 
-class ColumnSpec:
-    def __init__(self, name: str, data_type: str, entity_type: str="unknown", **kwargs: dict):
-        self.name = name
-        self.data_type = data_type
-        self.entity_type = entity_type
-        self.kwargs = kwargs
+# class ColumnSpec:
+#     def __init__(self, name: str, data_type: str, entity_type: str="unknown", **kwargs: dict):
+#         self.name = name
+#         self.data_type = data_type
+#         self.entity_type = entity_type
+#         self.kwargs = kwargs
 
-    def generate(self, df: DataFrame) -> DataFrame:
-        col_val = self.col_fn(**self.args)
-        df = df.withColumn(self.name, col_val.cast(self.data_type))
+#     def generate(self, df: DataFrame) -> DataFrame:
+#         col_val = self.col_fn(**self.args)
+#         df = df.withColumn(self.name, col_val.cast(self.data_type))
         
-    def to_dict(self):
-        result = {
-            "name": self.name,
-            "type": self.data_type,
-            "entity_type": self.entity_type
-        }
-        result = {**result, **self.kwargs}
-        return result
+#     def to_dict(self):
+#         result = {
+#             "name": self.name,
+#             "type": self.data_type,
+#             "entity_type": self.entity_type
+#         }
+#         result = {**result, **self.kwargs}
+#         return result
 
-class ComputedColumn(ColumnSpec):
+class ComputedColumn:
     def __init__(self, name: str, data_type: str, col_val: Column):
         self.name = name
         self.data_type = data_type
@@ -35,7 +35,7 @@ class ComputedColumn(ColumnSpec):
     def to_dict(self):
         return self.__dict__
 
-class SnapshotColumn(ColumnSpec):
+class SnapshotColumn:
     def __init__(self, name: str, data_type: str, ss: Snapshot):
         self.name = name
         self.data_type = data_type
@@ -62,7 +62,7 @@ class DfSpec:
     def __init__(self):
         self.columns = []
     
-    def add_column(self, col: ColumnSpec):
+    def add_column(self, col: ComputedColumn):
         self.columns.append(col)
         return self
 

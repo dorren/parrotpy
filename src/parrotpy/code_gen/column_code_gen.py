@@ -3,6 +3,7 @@ import black
 import textwrap
 from typing import List, Any
 from ..df_spec import DfSpec
+from ..inference.analyzer import InferredDf
 from ..inference.entity_map import EntityMap
 from ..utils import fn_path
 
@@ -215,17 +216,17 @@ def beautify_code(code: str):
 
     return fmt_code
 
-def spec2code(df_spec: DfSpec) -> str:
+def inferred2code(inferred_df: InferredDf) -> str:
     """ convert DfSpec to Python code """
-    tree = build_ast(df_spec)
+    tree = build_ast(inferred_df)
     generated_code = ast.unparse(tree)
     code = beautify_code(generated_code)
 
     return code
     
-def spec2df(spark, df_spec: DfSpec) -> str:
+def inferred2df(spark, inferred_df: InferredDf) -> str:
     """ convert DfSpec to Python code """
-    tree = build_ast(df_spec)
+    tree = build_ast(inferred_df)
     code = ast.unparse(tree)
     # compile original node doesn't work because it can't handle parentheses 
     # surrounded expression, so has to parse src code.
@@ -238,4 +239,4 @@ def spec2df(spark, df_spec: DfSpec) -> str:
 
     return gen_fn(spark)
 
-__all__ = ["spec2code", "spec2df"]
+__all__ = ["inferred2code", "inferred2df"]

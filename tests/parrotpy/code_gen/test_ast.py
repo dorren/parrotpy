@@ -4,8 +4,6 @@ import black
 import textwrap
 
 import parrotpy.functions as PF
-from parrotpy.df_spec import DfSpec, ColumnSpec
-from parrotpy.code_gen.column_code_gen import ColumnCodeGen
 
 @pytest.fixture
 def src_code():
