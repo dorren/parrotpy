@@ -1,6 +1,8 @@
 from typing import Any
+from pyspark.sql import DataFrame
 
 from parrotpy.functions.stats import normal
+from .functions.core import ForeignKey, ForeignKeyColumn
 from .df_spec import DfSpec, ComputedColumn, Snapshot, SnapshotColumn
 from .utils import snapshot
 
@@ -8,6 +10,22 @@ class DfBuilder:
     def __init__(self, parrot):
         self.parrot = parrot
         self.df_spec = DfSpec()
+        
+    def options(self, **kwargs):
+        self.df_spec.options(**kwargs)
+        return self
+
+    def empty_df(self, n: int):
+        """Create an empty dataframe with n rows.
+
+        Args:
+            n (int): Number of rows.
+
+        Returns:
+            DataFrame: Spark DataFrame.
+        """
+        df = self.parrot.spark.range(n).drop("id")
+        return df
 
     def build_from_dict(self, name: str, dtype: str, kwargs: dict):
         entity_map = self.parrot.entity_map
@@ -46,10 +64,28 @@ class DfBuilder:
             elif type(col_value) is Snapshot:
                 col = SnapshotColumn(name, dtype, col_value)
                 self.df_spec.add_column(col)
+            elif type(col_value) is ForeignKey:
+                col = ForeignKeyColumn(name, dtype, col_value)
+                self.df_spec.add_column(col)
+                    
         else:
             self.build_from_dict(name, dtype, kwargs)
 
         return self
 
+    def find_df(self, df_name: str) -> DataFrame:
+        """ find generated DF """
+        return self.parrot.generated_df.get(df_name)
+
     def gen_df(self, row_count: int):
-        return self.parrot.gen_df(self.df_spec, row_count)
+        df = self.empty_df(row_count)
+
+        for col in self.df_spec.columns:
+            df = col.generate(df, df_builder=self)
+
+        self.register_df(self.df_spec.spec_options["name"], df)
+
+        return df
+
+    def register_df(self, name: str, df: DataFrame):
+        self.parrot.generated_df[name] = df

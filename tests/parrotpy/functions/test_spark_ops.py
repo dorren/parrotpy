@@ -10,31 +10,34 @@ from random import random
 from parrotpy import Parrot
 from helpers.test_helpers import benchmark
 
+@pytest.fixture
+def customers_df(spark):
+    return spark.range(1000).withColumnRenamed("id", "customer_id")
 
-def test_random_fk(spark):
-    cust_n  = 100
-    order_n = 10000
+@pytest.fixture
+def orders_df(spark):
+    return spark.range(1000).withColumnRenamed("id", "order_id")
 
-    customer_df = spark.range(cust_n).withColumnRenamed("id", "customer_id")
-    order_df = spark.range(order_n).withColumnRenamed("id", "order_id")
-
+def test_random_fk(spark, customers_df, orders_df):
+    cust_n = 1000
     partition_n = 10
+
     # partitionBy("rand_key").
     w = Window.orderBy(F.monotonically_increasing_id())
-    customer_df = (customer_df
+    customers_df = (customers_df
         .withColumn("rand_key", F.floor(F.rand() * partition_n).cast("int"))
         .withColumn("cust_idx", (F.row_number().over(w)-1).cast("int"))
     )
-    customer_df.count()
+    customers_df.count()
 
-    order_df = (order_df
+    orders_df = (orders_df
         .withColumn("rand_key", F.floor(F.rand() * partition_n).cast("int"))
         .withColumn("cust_idx", F.floor(F.rand() * cust_n).cast("int"))
     )
 
     join_cond = ["cust_idx"]
-    joined_df = (order_df
-        .join(F.broadcast(customer_df), on=join_cond, how="inner")
+    joined_df = (orders_df
+        .join(F.broadcast(customers_df), on=join_cond, how="inner")
     )
 
     print("Joined:")
@@ -50,37 +53,64 @@ def test_random_fk(spark):
         .agg(F.sum("count")) \
         .show(1, False)
 
+def test_random_join(spark):
+    ref_df_count =  20
+    df_count     = 500
+    ref_df = spark.range(ref_df_count).withColumnRenamed("id", "ref_id")
+    df = spark.range(df_count)
+    ref_df.count()
+    df.count()
+
+    index_col = "idx"
+    fk_col  = "ref_id"
+    new_col = "ref_id2"
+    win = Window.orderBy(F.monotonically_increasing_id())
+    ref_df = ref_df.withColumn(index_col, F.row_number().over(win)-1)        
+
+    n = ref_df.count()
+    df = (df.withColumn(index_col, F.floor(F.rand() * n).cast("int"))
+        .join(F.broadcast(ref_df), on=[index_col], how="inner")
+        .drop(index_col)
+        .withColumnRenamed(fk_col, new_col)
+    )
+
+    # df.groupBy("ref_id").count().show(20, False)
+    df.show(20, False)
+
 def test_fast_row_number(spark):
     rows_count = 1_000_000
     partition_count = 10
     df = spark.range(rows_count)
     df.count()
 
-    win = Window.orderBy(F.monotonically_increasing_id())
-    df1 = df.withColumn("global_rn", F.row_number().over(win)-1)        
-    print(df1.count())
+    with benchmark("row_number, no partition"):
+        win = Window.orderBy(F.monotonically_increasing_id())
+        df1 = df.withColumn("global_rn", F.row_number().over(win)-1)        
+        print(df1.count())
 
-    win = Window.partitionBy(F.spark_partition_id()).orderBy("id")
-    df2 = (df
-        .repartition(partition_count)
-        .withColumn("partition_id", F.spark_partition_id())
-        .withColumn("partition_rn", F.row_number().over(win)-1)
-    )
+    with benchmark(f"row_number, {partition_count} partition"):
+        win = Window.partitionBy(F.spark_partition_id()).orderBy("id")
+        df2 = (df
+            .repartition(partition_count)
+            .withColumn("partition_id", F.spark_partition_id())
+            .withColumn("partition_rn", F.row_number().over(win)-1)
+        )
 
-    agg_df = (df2
-        .groupBy("partition_id")
-        .count()
-        .withColumn("offset", F.sum("count").over(
-            Window.orderBy("partition_id")) - F.col("count"))
-    )
+        agg_df = (df2
+            .groupBy("partition_id")
+            .count()
+            .withColumn("offset", F.sum("count").over(
+                Window.orderBy("partition_id")) - F.col("count"))
+        )
 
-    final_df = (df2
-        .join(F.broadcast(agg_df), on=["partition_id"])
-        .withColumn("global_rn", F.col("partition_rn") + F.col("offset"))
-        .select("id", "global_rn")
-    )
-    
-    print(final_df.count())
+        final_df = (df2
+            .join(F.broadcast(agg_df), on=["partition_id"])
+            .withColumn("global_rn", F.col("partition_rn") + F.col("offset"))
+            .select("id", "global_rn")
+        )
+        
+        print(final_df.count())
+        
 
 
 

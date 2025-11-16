@@ -13,6 +13,7 @@ from parrotpy.inference.analyzer import Analyzer
 def nums_df(parrot):
     n = 1000
     builder = (parrot.df_builder()
+        .options(name="nums_df")
         .build_column("u_nums", "double", uniform(n=1, min_value=0, max_value=100))
         .build_column("n_nums", "double", normal(n=1, mean=10, std_dev=2))
     )

@@ -13,7 +13,7 @@ def _base_template():
 
         def generate_synthetic_data(spark):
             parrot = Parrot(spark)
-            builder = parrot.df_builder()
+            builder = parrot.df_builder().options(name="df1")
             
             n = 100
             print(f"Starting generating {n} rows ...")

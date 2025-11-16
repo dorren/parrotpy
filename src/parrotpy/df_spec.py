@@ -8,7 +8,7 @@ class ComputedColumn:
         self.data_type = data_type
         self.col_val = col_val
 
-    def generate(self, df: DataFrame) -> DataFrame:
+    def generate(self, df: DataFrame, df_builder=None) -> DataFrame:
         df = df.withColumn(self.name, self.col_val.cast(self.data_type))
         return df
 
@@ -21,7 +21,7 @@ class SnapshotColumn:
         self.data_type = data_type
         self.snapshot = ss
 
-    def generate(self, df):
+    def generate(self, df: DataFrame, df_builder=None):
         col_value = self.snapshot.invoke()
         df = df.withColumn(self.name, col_value.cast(self.data_type))
         return df
@@ -34,20 +34,26 @@ class SnapshotColumn:
         combined = {**result, **self.snapshot.to_dict()}
 
         return combined
-    
-    def to_code(self):
-        pass
+
+
 
 class DfSpec:
     def __init__(self):
         self.columns = []
+        self.spec_options = {}
     
+    def options(self, **kwargs):
+        allowed = ["name", "format"]
+        filtered_dict = {key: kwargs[key] for key in kwargs if key in allowed}
+
+        self.spec_options = {**self.spec_options, **filtered_dict}
+
     def add_column(self, col: ComputedColumn):
         self.columns.append(col)
         return self
 
     def to_dict(self):
-        result = {}
+        result = self.spec_options
         result["columns"] = [col.to_dict() for col in self.columns]
 
         return result

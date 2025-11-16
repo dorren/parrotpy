@@ -13,7 +13,7 @@ def test_call_by_name(spark):
 
 @pytest.fixture
 def builder(parrot):
-    return parrot.df_builder()
+    return parrot.df_builder().options(name="df1")
 
 def test_wrap(builder):
     n = 3

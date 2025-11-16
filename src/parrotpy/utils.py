@@ -49,4 +49,5 @@ def snapshot(func):
 
     return wrapper
 
+
 __all__ = ["fn_path", "get_fn", "Snapshot", "snapshot"]
