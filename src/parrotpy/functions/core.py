@@ -124,6 +124,13 @@ class ForeignKey:
         local_df = local_df.select(F.col("L.*"), F.col(new_col_name))
         return local_df
     
+    def generate(self, df: DataFrame, df_builder, col_spec) -> DataFrame:
+        df_name, fk_col_name = self.path.split(".")
+        fk_df = df_builder.find_df(df_name)
+
+        df2 = self.references(df, fk_df, fk_col_name, col_spec.name)
+        return df2
+
 def fk_references(fk_path: str):
     """ define a foreign key column. parameter shall be in the format of "<df_name>.<column_name>", 
         For example, "customers.cust_id". Referenced df should existed in parrot object's generated_df. 

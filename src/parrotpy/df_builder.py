@@ -3,7 +3,7 @@ from pyspark.sql import Column, DataFrame
 
 from parrotpy.functions.stats import normal
 from .functions.core import ForeignKey
-from .df_spec import DfSpec, NativeColumn, Snapshot, SnapshotColumn, ForeignKeyColumn
+from .df_spec import DfSpec, NativeColumn, CustomColumn, Snapshot, SnapshotColumn
 from .utils import snapshot
 
 class DfBuilder:
@@ -61,8 +61,8 @@ class DfBuilder:
             col = NativeColumn(name, dtype, col_value)
         elif isinstance(col_value, Snapshot):
             col = SnapshotColumn(name, dtype, col_value)
-        elif type(col_value) is ForeignKey:
-            col = ForeignKeyColumn(name, dtype, col_value)        
+        else:
+            col = CustomColumn(name, dtype, col_value)
         
         self.df_spec.add_column(col)
 
