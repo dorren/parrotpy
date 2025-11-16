@@ -19,8 +19,8 @@ def test_wrap(builder):
     n = 3
     uniform_ss = snapshot(PF.stats.uniform)
     builder.build_column("u1", "array<double>", uniform_ss(n=3,seed=1))
-    builder.gen_df(n).show(n, False)
-    pprint(builder.df_spec.to_dict())
+    df = builder.gen_df(n)
+    assert(df.count() == n)
 
 def test_wrap_inline(builder):
     n = 2

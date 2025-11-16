@@ -2,6 +2,7 @@ from itertools import accumulate
 import json
 import pytest
 from pprint import pprint
+from pyspark.sql import Column
 from pyspark.sql.types import DateType, TimestampType
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
@@ -111,6 +112,9 @@ def test_fast_row_number(spark):
         
         print(final_df.count())
         
+def test_types(spark):
+    col = F.lit(None)
+    print(isinstance(col, Column))
 
 
 

@@ -71,11 +71,11 @@ def test_timestamp_between(spark):
     df = df.withColumn("create_time", timestamp_between(start_str, end_str))
     assert(df.count() == 10)
 
-def test_references(spark):
+def test_fk(spark):
     ref_df = spark.range(10).withColumnRenamed("id", "fk_id")
     df = spark.range(1000)
 
-    df2 = _fk_references(df, ref_df, "fk_id", "fk_id2")
+    df2 = ForeignKey.references(df, ref_df, "fk_id", "fk_id2")
     freq = (df2.groupBy("fk_id2").count()
         .agg(F.mean("count").cast("int").alias("mean"))
         .collect()[0][0]

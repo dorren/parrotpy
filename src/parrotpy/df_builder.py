@@ -1,9 +1,9 @@
 from typing import Any
-from pyspark.sql import DataFrame
+from pyspark.sql import Column, DataFrame
 
 from parrotpy.functions.stats import normal
-from .functions.core import ForeignKey, ForeignKeyColumn
-from .df_spec import DfSpec, ComputedColumn, Snapshot, SnapshotColumn
+from .functions.core import ForeignKey
+from .df_spec import DfSpec, NativeColumn, Snapshot, SnapshotColumn, ForeignKeyColumn
 from .utils import snapshot
 
 class DfBuilder:
@@ -57,19 +57,14 @@ class DfBuilder:
         Returns:
             Column: Spark Column.
         """
-        if col_value is not None:
-            if type(col_value).__name__ == "Column":
-                col = ComputedColumn(name, dtype, col_value)
-                self.df_spec.add_column(col)
-            elif type(col_value) is Snapshot:
-                col = SnapshotColumn(name, dtype, col_value)
-                self.df_spec.add_column(col)
-            elif type(col_value) is ForeignKey:
-                col = ForeignKeyColumn(name, dtype, col_value)
-                self.df_spec.add_column(col)
-                    
-        else:
-            self.build_from_dict(name, dtype, kwargs)
+        if isinstance(col_value, Column):
+            col = NativeColumn(name, dtype, col_value)
+        elif isinstance(col_value, Snapshot):
+            col = SnapshotColumn(name, dtype, col_value)
+        elif type(col_value) is ForeignKey:
+            col = ForeignKeyColumn(name, dtype, col_value)        
+        
+        self.df_spec.add_column(col)
 
         return self
 

@@ -7,7 +7,7 @@ from fitter import Fitter
 from typing import List
 
 from .entity_map import EntityType, EntityMap
-from ..df_spec import DfSpec, ComputedColumn
+from ..df_spec import DfSpec, NativeColumn
 from .. import functions as PF
     
 class InferredColumn:
@@ -51,7 +51,7 @@ class InferredDf:
         for col in self.columns:
             fn = entity_map.get(col.entity_type)
             fn_val = fn(**col.kwargs)
-            col_spec = ComputedColumn(col.name, col.data_type, fn_val)
+            col_spec = NativeColumn(col.name, col.data_type, fn_val)
             df_spec.add_column(col_spec)
 
         return df_spec

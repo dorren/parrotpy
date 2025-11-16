@@ -6,7 +6,6 @@ from pyspark.sql.types import StringType
 import rstr
 
 from ..utils import snapshot, Snapshot
-from ..df_spec import SnapshotColumn
 
 def auto_increment(start: int = 0, step: int = 1) -> Column:
     """Generate an auto-incrementing column starting from `start` with a given `step`.
@@ -98,42 +97,32 @@ def timestamp_between(start_ts_str:str, end_ts_str:str) -> Column:
 def nothing(**kwargs) -> Column:
     return F.lit(None)
 
-def _fk_references(local_df: DataFrame, fk_df: DataFrame, fk_col_name:str, new_col_name: str=None) -> DataFrame:
-    """ join reference_df, select <fk_col_name> value randomly, and rename it to <new_col_name>"""
-    
-    index_col = f"_{fk_col_name}_idx"
-    new_col_name = new_col_name if new_col_name else fk_col_name
 
-    win = Window.orderBy(F.monotonically_increasing_id())
-    fk_df = fk_df.withColumn(index_col, F.row_number().over(win)-1)        
-
-    n = fk_df.count()
-    local_df = (local_df
-        .alias("L")
-        .withColumn(index_col, F.floor(F.rand() * n).cast("int"))
-        .join(fk_df.alias("R"), on=[index_col], how="inner")
-        .drop(index_col)
-        .withColumnRenamed(fk_col_name, new_col_name)
-    )
-    local_df = local_df.select(F.col("L.*"), F.col(new_col_name))
-    return local_df
 
 class ForeignKey:
     def __init__(self, path):
         self.path = path
 
-class ForeignKeyColumn(SnapshotColumn):
-    def __init__(self, name: str, data_type: str, fk: ForeignKey):
-        self.name = name
-        self.data_type = data_type
-        self.fk = fk
-
-    def generate(self, df: DataFrame, df_builder=None):
-        df_name, fk_col_name = self.fk.path.split(".")
-        fk_df = df_builder.find_df(df_name)
+    @classmethod
+    def references(cls, local_df: DataFrame, fk_df: DataFrame, fk_col_name:str, new_col_name: str=None) -> DataFrame:
+        """ join reference_df, select <fk_col_name> value randomly, and rename it to <new_col_name>"""
         
-        df2 = _fk_references(df, fk_df, fk_col_name, self.name)
-        return df2
+        index_col = f"_{fk_col_name}_idx"
+        new_col_name = new_col_name if new_col_name else fk_col_name
+
+        win = Window.orderBy(F.monotonically_increasing_id())
+        fk_df = fk_df.withColumn(index_col, F.row_number().over(win)-1)        
+
+        n = fk_df.count()
+        local_df = (local_df
+            .alias("L")
+            .withColumn(index_col, F.floor(F.rand() * n).cast("int"))
+            .join(fk_df.alias("R"), on=[index_col], how="inner")
+            .drop(index_col)
+            .withColumnRenamed(fk_col_name, new_col_name)
+        )
+        local_df = local_df.select(F.col("L.*"), F.col(new_col_name))
+        return local_df
     
 def fk_references(fk_path: str):
     """ define a foreign key column. parameter shall be in the format of "<df_name>.<column_name>", 
@@ -151,6 +140,6 @@ __all__ = [
     "date_between",
     "timestamp_between",
     "nothing",
-    "_fk_references",
+    "ForeignKey",
     "fk_references"
 ]

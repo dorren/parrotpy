@@ -29,7 +29,7 @@ class Snapshot:
             "fn_params": self.fn_params
         }
     
-    def invoke(self):
+    def invoke(self, context: dict={}):
         """ invoke the stored function and return result """
         fn = get_fn(self.fn_path)
         return fn(**self.fn_params)

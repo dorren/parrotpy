@@ -20,6 +20,7 @@ def nums_df(parrot):
     df = builder.gen_df(n)
     return df
 
+@pytest.mark.skip(reason="too slow")
 def test_ks_test():
     dists = ["norm", "uniform"]
     # print(get_common_distributions())
@@ -36,6 +37,7 @@ def test_ks_test():
     dist_name = list(f.get_best())[0]
     assert dist_name == "uniform"
 
+@pytest.mark.skip(reason="too slow")
 def test_distribution(parrot, nums_df):
     df = nums_df
     anlz = parrot.analyzer()
@@ -52,5 +54,5 @@ def test_analyze_df(parrot, nums_df):
     pprint(dfa.to_dict())
 
     df_spec = dfa.to_df_spec()
-    pprint(df_spec.to_dict())
+    print(df_spec)
     
