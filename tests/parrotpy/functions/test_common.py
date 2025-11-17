@@ -4,7 +4,8 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 from pyspark.sql.types import ArrayType, DoubleType, StringType
 
-from parrotpy.functions.common import name, address
+from parrotpy import functions as PF
+# from parrotpy.functions.common import person_name, address
 from helpers.spark_helpers import spark
 
 @pytest.fixture(scope="module")
@@ -20,8 +21,8 @@ def test_faker_name(faker):
     
 def test_df(spark):
     df = spark.range(10)  \
-        .withColumn("name", name()) \
-        .withColumn("address", address())
+        .withColumn("name",    PF.common.person_name()) \
+        .withColumn("address", PF.common.address())
     df.show(3, False)
 
     names_df = df.select("name", "address").distinct()

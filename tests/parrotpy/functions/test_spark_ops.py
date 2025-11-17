@@ -2,96 +2,43 @@ from itertools import accumulate
 import json
 import pytest
 from pprint import pprint
-from pyspark.sql.types import StructType
+from pyspark.sql import Column
+from pyspark.sql.types import DateType, TimestampType
 from pyspark.sql import functions as F
 from pyspark.sql.window import Window
 from random import random
 
 from parrotpy import Parrot
-from parrotpy.functions.core import rand_str, rand_num_str
 from helpers.test_helpers import benchmark
 
+@pytest.fixture
+def customers_df(spark):
+    return spark.range(1000).withColumnRenamed("id", "customer_id")
 
-@pytest.fixture(scope="module")
-def categories():
-    categories = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"]
-    weights = [0.05, 0.1, 0.15, 0.2, 0.1, 0.1, 0.1, 0.05, 0.05, 0.05]
-    cum_weights = accumulate(weights)
+@pytest.fixture
+def orders_df(spark):
+    return spark.range(1000).withColumnRenamed("id", "order_id")
 
-    return list(zip(categories, cum_weights))
-
-def test_sample(spark, categories):
-    df = spark.createDataFrame(categories, schema=["category", "weight"]) \
-      .withColumn("weight", F.round(F.col("weight"), 3))
-    
-    min_max_df = df.groupBy(F.lit(1)) \
-      .agg(F.min("weight").alias("min_w"), 
-           F.max("weight").alias("max_w")) \
-      .drop("1")
-    min_max_df.show()
-
-    df.crossJoin(min_max_df) \
-      .withColumn("rand1", F.round(F.rand(), 3)) \
-      .show(10, False)
-    
-def check_result(rnd, df):
-    window_spec = Window \
-      .orderBy("weight") \
-      .rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)        
-
-    df.withColumn("rand", F.round(F.lit(rnd), 3)) \
-        .withColumn("selected", F
-            .when((F.col("rand") < F.col("min_w")), F.col("min_cat"))
-            .when((F.col("rand") > F.col("max_w")), F.col("max_cat"))
-            .when((F.col("rand") >= F.col("weight")), F.col("next_cat"))
-            .otherwise(F.lit(None))
-        ) \
-        .filter(F.col("selected").isNotNull()) \
-        .select(F.max("selected").alias("final")) \
-        .show(10, False)
-
-def test_sample2(spark, categories):
-    df = spark.createDataFrame(categories, schema=["category", "weight"]) \
-      .withColumn("weight", F.round(F.col("weight"), 3))
-    
-    window_spec = Window \
-      .orderBy("weight") \
-      .rowsBetween(Window.unboundedPreceding, Window.unboundedFollowing)
-    
-    df = df.withColumn("next_cat", F.lead("category").over(Window.orderBy("weight"))) \
-        .withColumn("min_w", F.min("weight").over(window_spec)) \
-        .withColumn("max_w", F.max("weight").over(window_spec)) \
-        .withColumn("min_cat", F.min_by("category", "weight").over(window_spec)) \
-        .withColumn("max_cat", F.max_by("category", "weight").over(window_spec))
-    df.show(10, False)
-    
-    for r in [0.01, 0.99, 0.45, 0.75]:
-        check_result(r, df)
-
-def test_random_fk(spark):
-    cust_n  = 100
-    order_n = 10000
-
-    customer_df = spark.range(cust_n).withColumnRenamed("id", "customer_id")
-    order_df = spark.range(order_n).withColumnRenamed("id", "order_id")
-
+def test_random_fk(spark, customers_df, orders_df):
+    cust_n = 1000
     partition_n = 10
+
     # partitionBy("rand_key").
     w = Window.orderBy(F.monotonically_increasing_id())
-    customer_df = (customer_df
+    customers_df = (customers_df
         .withColumn("rand_key", F.floor(F.rand() * partition_n).cast("int"))
         .withColumn("cust_idx", (F.row_number().over(w)-1).cast("int"))
     )
-    customer_df.count()
+    customers_df.count()
 
-    order_df = (order_df
+    orders_df = (orders_df
         .withColumn("rand_key", F.floor(F.rand() * partition_n).cast("int"))
         .withColumn("cust_idx", F.floor(F.rand() * cust_n).cast("int"))
     )
 
     join_cond = ["cust_idx"]
-    joined_df = (order_df
-        .join(F.broadcast(customer_df), on=join_cond, how="inner")
+    joined_df = (orders_df
+        .join(F.broadcast(customers_df), on=join_cond, how="inner")
     )
 
     print("Joined:")
@@ -107,36 +54,68 @@ def test_random_fk(spark):
         .agg(F.sum("count")) \
         .show(1, False)
 
+def test_random_join(spark):
+    ref_df_count =  20
+    df_count     = 500
+    ref_df = spark.range(ref_df_count).withColumnRenamed("id", "ref_id")
+    df = spark.range(df_count)
+    ref_df.count()
+    df.count()
+
+    index_col = "idx"
+    fk_col  = "ref_id"
+    new_col = "ref_id2"
+    win = Window.orderBy(F.monotonically_increasing_id())
+    ref_df = ref_df.withColumn(index_col, F.row_number().over(win)-1)        
+
+    n = ref_df.count()
+    df = (df.withColumn(index_col, F.floor(F.rand() * n).cast("int"))
+        .join(F.broadcast(ref_df), on=[index_col], how="inner")
+        .drop(index_col)
+        .withColumnRenamed(fk_col, new_col)
+    )
+
+    # df.groupBy("ref_id").count().show(20, False)
+    df.show(20, False)
+
 def test_fast_row_number(spark):
     rows_count = 1_000_000
     partition_count = 10
     df = spark.range(rows_count)
     df.count()
 
-    win = Window.orderBy(F.monotonically_increasing_id())
-    df1 = df.withColumn("global_rn", F.row_number().over(win)-1)        
-    print(df1.count())
+    with benchmark("row_number, no partition"):
+        win = Window.orderBy(F.monotonically_increasing_id())
+        df1 = df.withColumn("global_rn", F.row_number().over(win)-1)        
+        print(df1.count())
 
-    win = Window.partitionBy(F.spark_partition_id()).orderBy("id")
-    df2 = (df
-        .repartition(partition_count)
-        .withColumn("partition_id", F.spark_partition_id())
-        .withColumn("partition_rn", F.row_number().over(win)-1)
-    )
+    with benchmark(f"row_number, {partition_count} partition"):
+        win = Window.partitionBy(F.spark_partition_id()).orderBy("id")
+        df2 = (df
+            .repartition(partition_count)
+            .withColumn("partition_id", F.spark_partition_id())
+            .withColumn("partition_rn", F.row_number().over(win)-1)
+        )
 
-    agg_df = (df2
-        .groupBy("partition_id")
-        .count()
-        .withColumn("offset", F.sum("count").over(
-            Window.orderBy("partition_id")) - F.col("count"))
-    )
+        agg_df = (df2
+            .groupBy("partition_id")
+            .count()
+            .withColumn("offset", F.sum("count").over(
+                Window.orderBy("partition_id")) - F.col("count"))
+        )
 
-    final_df = (df2
-        .join(F.broadcast(agg_df), on=["partition_id"])
-        .withColumn("global_rn", F.col("partition_rn") + F.col("offset"))
-        .select("id", "global_rn")
-    )
-    
-    print(final_df.count())
+        final_df = (df2
+            .join(F.broadcast(agg_df), on=["partition_id"])
+            .withColumn("global_rn", F.col("partition_rn") + F.col("offset"))
+            .select("id", "global_rn")
+        )
+        
+        print(final_df.count())
+        
+def test_types(spark):
+    col = F.lit(None)
+    print(isinstance(col, Column))
+
+
 
 

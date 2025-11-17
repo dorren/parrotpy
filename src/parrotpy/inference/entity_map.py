@@ -1,0 +1,42 @@
+from collections import UserDict
+from enum import Enum
+import logging
+from parrotpy import functions as PF
+# from parrotpy.functions import common as C
+
+class EntityType(Enum):
+    PERSON_NAME = "person name"
+    CHOICES = "choices"
+    DIST_NORMAL = "dist.normal"
+    DIST_UNIFORM = "dist.uniform"
+    
+class EntityMap(UserDict):
+
+    """ map entity type to the value generating function. For example:
+
+        entity type "person" would be mapped to parrotpy.functions.name()
+        entity type "uniform distribution" would be mapped to parrotpy.functions.stats.uniform()
+    """
+    def register(self, name: str, fn:callable):
+        super().__setitem__(name, fn)
+
+    def get(self, entity_type: str):
+        """ find the right function for the entity type """
+        fn = super().get(entity_type)
+
+        if fn is None:
+            logging.warning(f"no function found for {entity_type}")
+            fn = PF.core.nothing()
+            
+        return fn
+
+
+    @classmethod
+    def default(cls):
+        em = cls()
+        em.register("person name",  PF.common.person_name)
+        em.register("choices",      PF.core.choices)
+        em.register("dist.normal",  PF.stats.normal)
+        em.register("dist.uniform", PF.stats.uniform)
+
+        return em

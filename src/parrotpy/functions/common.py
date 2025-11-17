@@ -1,9 +1,9 @@
 from faker import Faker
 from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, BooleanType, DateType, DoubleType, LongType, StringType
+from pyspark.sql.types import StringType
 
 @udf(returnType=StringType())
-def name():
+def person_name():
     faker = Faker()
     return faker.name()
 
@@ -12,4 +12,4 @@ def address():
     faker = Faker()
     return faker.address()
 
-__all__ = ['name', 'address']
+__all__ = ['person_name', 'address']

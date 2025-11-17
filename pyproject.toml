@@ -10,14 +10,18 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.10"
+python = ">=3.9,<3.14"
 faker = ">=37.11.0"
-numpy = ">=2.2.6"
+numpy = ">=1.26.0"
 pyspark = ">=3.5.5"
-
+fitter = ">=1.6.0"
+spacy = "^3.8.8"
+black = "^25.11.0"
+pyreadline3 = "^3.5.4"
+rstr = "^3.2.2"
 
 [tool.poetry.group.test.dependencies]
-pytest = "^8.4.2"
+pytest = ">=7.3.0"
 
 [build-system]
 requires = ["poetry-core"]
