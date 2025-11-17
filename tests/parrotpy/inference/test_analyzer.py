@@ -7,6 +7,7 @@ from pprint import pprint
 from parrotpy.functions.stats import normal, uniform
 from parrotpy.inference.entity_map import EntityType
 from parrotpy.inference.analyzer import Analyzer
+from parrotpy.code_gen.column_code_gen import inferred2code
 
 
 @pytest.fixture
@@ -53,6 +54,5 @@ def test_analyze_df(parrot, nums_df):
     dfa = parrot.analyzer().analyze_df(nums_df)
     pprint(dfa.to_dict())
 
-    df_spec = dfa.to_df_spec()
-    print(df_spec)
-    
+    code = inferred2code(dfa)
+    print(code)

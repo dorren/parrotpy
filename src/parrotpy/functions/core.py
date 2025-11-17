@@ -189,7 +189,7 @@ def choices(elements: list, weights: list=None, seed: int=None) -> Column:
     if weights is None:
         return _uniform_choice(elements, seed)
     else:
-        return _weighted_choice(elements, weights, seed)
+        return weighted_choice(elements, weights, seed)
 
 class WeightedChoice:
     def __init__(self, elements: list, weights: list, seed: int = None):
