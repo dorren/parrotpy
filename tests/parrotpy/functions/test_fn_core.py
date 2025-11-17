@@ -1,9 +1,14 @@
 import pytest
 
+import numpy as np
+from pyspark.sql.functions import udf
+from pyspark.sql.types import ArrayType, DoubleType
 from pyspark.sql import functions as F
 from pyspark.testing import assertDataFrameEqual
 
 from parrotpy.functions.core import *
+from helpers.test_helpers import benchmark
+
 
 def test_empty_df(parrot):
     n = 10
@@ -81,3 +86,72 @@ def test_fk(spark):
         .collect()[0][0]
     )
     assert(freq == 1000/10)
+
+
+def test_numpy(spark):
+    @udf(returnType=ArrayType(DoubleType()))
+    def gen_numpy_array(mean, sd, size, seed):
+        # np.random.seed(seed)
+        return np.random.normal(mean, sd, size).tolist()
+
+    row_count = 1000
+    mean = 100
+    stddev = 5.0
+    array_size = 10
+    seed = 42
+    col_name = "numpy_arr"
+
+    df = spark.range(row_count)
+
+    with benchmark("Use numpy.random.normal()"):
+      df = df.withColumn(col_name, gen_numpy_array(F.lit(mean), F.lit(stddev), F.lit(array_size), F.lit(seed)))
+      rows = df.collect()
+
+def test_py_random_choices():
+    import random
+    from collections import Counter
+
+    choices = ['A', 'B', 'C', 'D', 'E']
+    weights = [0.1, 0.2, 0.3, 0.3, 0.1]
+    row_count = 10000
+    seed = 42
+
+    random.seed(seed)
+    results = random.choices(choices, weights, k=row_count)
+    actual = Counter(results)
+    print(actual)
+
+def test_uniform_choice(spark):
+    elements = ['A', 'B', 'C', 'D', 'E']
+    row_count = 10000
+    seed = 42
+    col_name = "choice"
+
+    df = spark.range(row_count)
+    df = df.withColumn("selected", _uniform_choice(elements))
+    df.groupBy("selected").count().show(5, False)
+
+def test__weighted_choice(spark):
+    elements = ['A', 'B', 'C', 'D', 'E']
+    weights =  [0.1, 0.2, 0.3, 0.3, 0.1]
+    row_count = 10000
+
+    df = spark.range(row_count)
+    df = df \
+        .withColumn("rnd", F.rand()) \
+        .withColumn("selected", _weighted_choice(elements, weights, "rnd"))
+
+    df.groupBy("selected").count().orderBy("selected").show(5, False)
+
+def test_weighted_choice(parrot):
+    elements = ['A', 'B', 'C', 'D', 'E']
+    weights =  [0.1, 0.2, 0.3, 0.3, 0.1]
+    row_count = 10000
+
+    df = (parrot.df_builder()
+        .options(name="letters")
+        .build_column("letter", "string", weighted_choice(elements, weights))
+        .gen_df(row_count)
+    )
+
+    df.groupBy("letter").count().orderBy("letter").show(5, False)

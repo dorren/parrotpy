@@ -1,9 +1,8 @@
-import numpy as np
+
 import pytest
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, DoubleType
 
 from helpers.spark_helpers import spark
 from parrotpy.functions.stats import normal
@@ -59,62 +58,3 @@ def test_normal_array_no_seed(spark):
     df = spark.range(row_count)
     df = df.withColumn(col_name, samples)
     df.show(3, False)
-
-def test_numpy(spark):
-    @udf(returnType=ArrayType(DoubleType()))
-    def gen_numpy_array(mean, sd, size, seed):
-        # np.random.seed(seed)
-        return np.random.normal(mean, sd, size).tolist()
-
-    row_count = 1000
-    mean = 100
-    stddev = 5.0
-    array_size = 10
-    seed = 42
-    col_name = "numpy_arr"
-
-    df = spark.range(row_count)
-
-    with benchmark("Use numpy.random.normal()"):
-      df = df.withColumn(col_name, gen_numpy_array(F.lit(mean), F.lit(stddev), F.lit(array_size), F.lit(seed)))
-      rows = df.collect()
-
-def test_py_random_choices():
-    import random
-    from collections import Counter
-
-    choices = ['A', 'B', 'C', 'D', 'E']
-    weights = [0.1, 0.2, 0.3, 0.3, 0.1]
-    row_count = 10000
-    seed = 42
-
-    random.seed(seed)
-    results = random.choices(choices, weights, k=row_count)
-    actual = Counter(results)
-    print(actual)
-
-def test_uniform_choice(spark):
-    from parrotpy.functions.stats import _uniform_choice
-
-    elements = ['A', 'B', 'C', 'D', 'E']
-    row_count = 10000
-    seed = 42
-    col_name = "choice"
-
-    df = spark.range(row_count)
-    df = df.withColumn("selected", _uniform_choice(elements))
-    df.groupBy("selected").count().show(5, False)
-
-def test_weighted_choice(spark):
-    from parrotpy.functions.stats import _weighted_choice
-
-    elements = ['A', 'B', 'C', 'D', 'E']
-    weights =  [0.1, 0.2, 0.3, 0.3, 0.1]
-    row_count = 10000
-
-    df = spark.range(row_count)
-    df = df \
-        .withColumn("rnd", F.rand()) \
-        .withColumn("selected", _weighted_choice(elements, weights, "rnd"))
-
-    df.groupBy("selected").count().orderBy("selected").show(5, False)

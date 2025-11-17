@@ -35,7 +35,7 @@ class EntityMap(UserDict):
     def default(cls):
         em = cls()
         em.register("person name",  PF.common.person_name)
-        em.register("choices",      PF.stats.choices)
+        em.register("choices",      PF.core.choices)
         em.register("dist.normal",  PF.stats.normal)
         em.register("dist.uniform", PF.stats.uniform)
 

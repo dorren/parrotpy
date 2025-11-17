@@ -22,3 +22,5 @@ def test_use_fk(parrot):
     )
 
     assert(orders_df.count() == 1000)
+
+
