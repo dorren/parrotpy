@@ -2,7 +2,6 @@ from typing import Any
 from pyspark.sql import Column, DataFrame
 
 from parrotpy.functions.stats import normal
-from .functions.core import ForeignKey
 from .df_spec import DfSpec, NativeColumn, CustomColumn, Snapshot, SnapshotColumn
 from .utils import snapshot
 
@@ -26,25 +25,6 @@ class DfBuilder:
         """
         df = self.parrot.spark.range(n).drop("id")
         return df
-
-    def build_from_dict(self, name: str, dtype: str, kwargs: dict):
-        entity_map = self.parrot.entity_map
-        fn = entity_map.match(kwargs)
-        if fn:
-            del kwargs["distribution"]
-            fn_ss = snapshot(fn)(**kwargs)
-            col = SnapshotColumn(name, dtype, fn_ss)
-            self.df_spec.add_column(col)
-        else:
-            raise ValueError(f"Can find function for given attributes {kwargs}")
-
-        # if "gen" in kwargs:
-        #     del kwargs["gen"]
-        #     fn_ss = snapshot(normal)(**kwargs)  # TODO, call fn by name
-        #     col = SnapshotColumn(name, dtype, fn_ss)
-        #     self.schema.add_column(col)
-
-        return self
     
     def build_column(self, name: str, dtype: str, col_value:Any = None, **kwargs: dict):
         """Build a column based on the provided attributes.
@@ -78,7 +58,9 @@ class DfBuilder:
         for col in self.df_spec.columns:
             df = col.generate(df, df_builder=self)
 
-        self.register_df(self.df_spec.spec_options["name"], df)
+        # TODO, this should not be here.
+        if "name" in self.df_spec.spec_options:
+            self.register_df(self.df_spec.spec_options["name"], df)
 
         return df
 

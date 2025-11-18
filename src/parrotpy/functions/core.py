@@ -101,43 +101,41 @@ def nothing(**kwargs) -> Column:
 
 
 
-class ForeignKey:
-    def __init__(self, path):
-        self.path = path
-
-    @classmethod
-    def references(cls, local_df: DataFrame, fk_df: DataFrame, fk_col_name:str, new_col_name: str=None) -> DataFrame:
-        """ join reference_df, select <fk_col_name> value randomly, and rename it to <new_col_name>"""
-        
-        index_col = f"_{fk_col_name}_idx"
-        new_col_name = new_col_name if new_col_name else fk_col_name
-
-        win = Window.orderBy(F.monotonically_increasing_id())
-        fk_df = fk_df.withColumn(index_col, F.row_number().over(win)-1)        
-
-        n = fk_df.count()
-        local_df = (local_df
-            .alias("L")
-            .withColumn(index_col, F.floor(F.rand() * n).cast("int"))
-            .join(fk_df.alias("R"), on=[index_col], how="inner")
-            .drop(index_col)
-            .withColumnRenamed(fk_col_name, new_col_name)
-        )
-        local_df = local_df.select(F.col("L.*"), F.col(new_col_name))
-        return local_df
+def _fk_references(local_df: DataFrame, fk_df: DataFrame, fk_col_name:str, new_col_name: str=None) -> DataFrame:
+    """ join reference_df, select <fk_col_name> value randomly, and rename it to <new_col_name>"""
     
-    def generate(self, df: DataFrame, df_builder, col_spec) -> DataFrame:
-        df_name, fk_col_name = self.path.split(".")
-        fk_df = df_builder.find_df(df_name)
+    index_col = f"_{fk_col_name}_idx"
+    new_col_name = new_col_name if new_col_name else fk_col_name
 
-        df2 = self.references(df, fk_df, fk_col_name, col_spec.name)
-        return df2
+    win = Window.orderBy(F.monotonically_increasing_id())
+    fk_df = fk_df.withColumn(index_col, F.row_number().over(win)-1)        
+
+    n = fk_df.count()
+    local_df = (local_df
+        .alias("L")
+        .withColumn(index_col, F.floor(F.rand() * n).cast("int"))
+        .join(fk_df.alias("R"), on=[index_col], how="inner")
+        .drop(index_col)
+        .withColumnRenamed(fk_col_name, new_col_name)
+    )
+    local_df = local_df.select(F.col("L.*"), F.col(new_col_name))
+    return local_df
 
 def fk_references(fk_path: str):
     """ define a foreign key column. parameter shall be in the format of "<df_name>.<column_name>", 
         For example, "customers.cust_id". Referenced df should existed in parrot object's generated_df. 
     """
-    return ForeignKey(fk_path)
+
+    
+    def generate(df: DataFrame, df_builder, col_spec) -> DataFrame:
+        df_name, fk_col_name = fk_path.split(".")
+        fk_df = df_builder.find_df(df_name)
+
+        df2 = _fk_references(df, fk_df, fk_col_name, col_spec.name)
+        return df2
+
+    return generate
+
 
 
 def _uniform_choice(elements: list, seed: int=None) -> Column:
@@ -191,22 +189,6 @@ def choices(elements: list, weights: list=None, seed: int=None) -> Column:
     else:
         return weighted_choice(elements, weights, seed)
 
-class WeightedChoice:
-    def __init__(self, elements: list, weights: list, seed: int = None):
-        self.elements = elements
-        self.weights = weights
-        self.seed = seed
-    
-    def generate(self, df: DataFrame, df_builder, col_spec) -> DataFrame:
-        output_col_name = col_spec.name
-        rand_col_name = f"_{output_col_name}_rand"
-        choice_col = _weighted_choice(self.elements, self.weights, rand_col_name, self.seed)
-        df = (df
-            .withColumn(rand_col_name, F.rand(self.seed)) 
-            .withColumn(output_col_name, choice_col)
-            .drop(rand_col_name)
-        )
-        return df
         
 def weighted_choice(elements: list, weights: list, seed: int=None) -> DataFrame:
     """Add a column with weighted random choice from given elements.
@@ -220,7 +202,19 @@ def weighted_choice(elements: list, weights: list, seed: int=None) -> DataFrame:
     Returns:
         DataFrame: Spark DataFrame with new column "weighted_choice".
     """
-    return WeightedChoice(elements, weights, seed)
+
+    def generate(df: DataFrame, df_builder, col_spec) -> DataFrame:
+        output_col_name = col_spec.name
+        rand_col_name = f"_{output_col_name}_rand"
+        choice_col = _weighted_choice(elements, weights, rand_col_name, seed)
+        df = (df
+            .withColumn(rand_col_name, F.rand(seed)) 
+            .withColumn(output_col_name, choice_col)
+            .drop(rand_col_name)
+        )
+        return df
+    
+    return generate
 
 __all__ = [
     "auto_increment",
@@ -232,7 +226,7 @@ __all__ = [
     "date_between",
     "timestamp_between",
     "nothing",
-    "ForeignKey",
+    "_fk_references",
     "fk_references",
     "_uniform_choice",
     "_weighted_choice",

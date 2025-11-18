@@ -9,7 +9,6 @@ __all__=[
     "auto_increment",
     "choices",
     "date_between",
-    "ForeignKey",
     "fk_references",
     "nothing",
     "rand_str", 

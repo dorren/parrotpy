@@ -80,7 +80,7 @@ def test_fk(spark):
     ref_df = spark.range(10).withColumnRenamed("id", "fk_id")
     df = spark.range(1000)
 
-    df2 = PF.ForeignKey.references(df, ref_df, "fk_id", "fk_id2")
+    df2 = PF._fk_references(df, ref_df, "fk_id", "fk_id2")
     freq = (df2.groupBy("fk_id2").count()
         .agg(F.mean("count").cast("int").alias("mean"))
         .collect()[0][0]
@@ -150,7 +150,7 @@ def test_weighted_choice(parrot):
 
     df = (parrot.df_builder()
         .options(name="letters")
-        .build_column("letter", "string", PF.choices(elements, weights))
+        .build_column("letter", "string", PF.weighted_choice(elements, weights))
         .gen_df(row_count)
     )
 

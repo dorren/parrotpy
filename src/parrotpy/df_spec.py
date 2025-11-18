@@ -28,7 +28,7 @@ class NativeColumn(ColumnSpec):
 class CustomColumn(ColumnSpec):
     """ column value is a native spark.sql.Column """
     def generate(self, df: DataFrame, df_builder) -> DataFrame:
-        return self.col_val.generate(df, df_builder, self)
+        return self.col_val(df, df_builder, self)
 
 class SnapshotColumn(ColumnSpec):
     def __init__(self, name: str, data_type: str, col_val: Snapshot):
