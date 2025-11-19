@@ -2,7 +2,7 @@ from typing import Any
 from pyspark.sql import Column, DataFrame
 
 from parrotpy.functions.stats import normal
-from .df_spec import DfSpec, NativeColumn, CustomColumn, Snapshot, SnapshotColumn
+from .models import DfSpec, NativeColumn, CustomColumn, Snapshot, SnapshotColumn
 from .utils import snapshot
 
 class DfBuilder:
@@ -59,8 +59,8 @@ class DfBuilder:
             df = col.generate(df, df_builder=self)
 
         # TODO, this should not be here.
-        if "name" in self.df_spec.spec_options:
-            self.register_df(self.df_spec.spec_options["name"], df)
+        if "name" in self.df_spec._options:
+            self.register_df(self.df_spec._options["name"], df)
 
         return df
 

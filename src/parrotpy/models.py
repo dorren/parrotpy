@@ -5,22 +5,22 @@ from typing import Any
 from .utils import Snapshot
 
 
-class ColumnSpec(ABC):
+class ColumnSpec:
     def __init__(self, name: str, data_type: str, col_val: Any):
         self.name = name
         self.data_type = data_type
         self.col_val = col_val
 
-    @abstractmethod
     def generate(self, df: DataFrame, df_builder=None) -> DataFrame:
         return self.col_val.generate(df, df_builder, self)
 
     def __str__(self):
         cls_name = self.__class__.__name__
         return f"{cls_name}({self.__dict__})"
-    
+
+
 class NativeColumn(ColumnSpec):
-    """ column value is a native spark.sql.Column """
+    """ column value is a native spark.sql.Column value """
     def generate(self, df: DataFrame, df_builder=None) -> DataFrame:
         df = df.withColumn(self.name, self.col_val.cast(self.data_type))
         return df
@@ -44,20 +44,20 @@ class SnapshotColumn(ColumnSpec):
 class DfSpec:
     def __init__(self):
         self.columns = []
-        self.spec_options = {}
+        self._options = {}
     
     def options(self, **kwargs):
-        allowed = ["name", "format"]
+        allowed = ["name"]
         filtered_dict = {key: kwargs[key] for key in kwargs if key in allowed}
 
-        self.spec_options = {**self.spec_options, **filtered_dict}
+        self._options = {**self._options, **filtered_dict}
 
     def add_column(self, col: NativeColumn):
         self.columns.append(col)
         return self
     
     def __str__(self):
-        result = f"{self.__class__}({self.spec_options})"
+        result = f"{self.__class__}({self._options})"
         for c in self.columns:
             result += f"\n  {c}"
 

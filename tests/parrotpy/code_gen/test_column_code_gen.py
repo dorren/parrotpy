@@ -1,7 +1,7 @@
 import pytest
 import ast
 
-from parrotpy.df_spec import DfSpec
+from parrotpy.models import DfSpec
 from parrotpy.inference.analyzer import InferredDf, InferredColumn
 from parrotpy.code_gen.column_code_gen import inferred2code, inferred2df
 

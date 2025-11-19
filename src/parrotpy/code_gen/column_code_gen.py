@@ -2,7 +2,7 @@ import ast
 import black
 import textwrap
 from typing import List, Any
-from ..df_spec import DfSpec
+from ..models import DfSpec
 from ..inference.analyzer import InferredDf
 from ..inference.entity_map import EntityMap
 from ..utils import fn_path

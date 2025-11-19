@@ -7,7 +7,7 @@ from fitter import Fitter
 from typing import List
 
 from .entity_map import EntityType, EntityMap
-from ..df_spec import DfSpec, NativeColumn
+from ..models import DfSpec, NativeColumn
 from .. import functions as PF
     
 class InferredColumn:
