@@ -1,8 +1,9 @@
+import logging
 from typing import Any
 from pyspark.sql import Column, DataFrame
 
 from parrotpy.functions.stats import normal
-from .models import DfSpec, NativeColumn, CustomColumn, Snapshot, SnapshotColumn
+from .models import DfSpec, ColumnSpec, ColumnValue
 from .utils import snapshot
 
 class DfBuilder:
@@ -26,43 +27,54 @@ class DfBuilder:
         df = self.parrot.spark.range(n).drop("id")
         return df
     
-    def build_column(self, name: str, dtype: str, col_value:Any = None, **kwargs: dict):
+    def build_column(self, name: str, dtype: str, col_value: ColumnValue):
         """Build a column based on the provided attributes.
 
         Args:
             name (str): Column name.
             dtype (str): Data type of the column.
-            attrs (dict): Attributes for the value generating function.
+            col_value (ColumnValue): Attributes or function for the column value.
 
         Returns:
-            Column: Spark Column.
+            DfBuilder: self.
         """
-        if isinstance(col_value, Column):
-            col = NativeColumn(name, dtype, col_value)
-        elif isinstance(col_value, Snapshot):
-            col = SnapshotColumn(name, dtype, col_value)
-        else:
-            col = CustomColumn(name, dtype, col_value)
         
-        self.df_spec.add_column(col)
+        col_spec = ColumnSpec(name, dtype, col_value)
+        self.df_spec.add_column(col_spec)
 
         return self
 
     def find_df(self, df_name: str) -> DataFrame:
         """ find generated DF """
-        return self.parrot.generated_df.get(df_name)
+        return self.parrot.dataframes.get(df_name)
 
-    def gen_df(self, row_count: int):
+    def generate_column(self, df: DataFrame, col_spec: ColumnSpec, context: dict):
+        col_val = col_spec.value
+        if isinstance(col_val, Column):
+            df = df.withColumn(col_spec.name, col_val.cast(col_spec.data_type))
+        elif callable(col_val):
+            df = col_val(df, col_spec, context)
+        else:
+            logging.warning(f"don't know how to handle column {col_spec.name} with value {col_val}")
+        
+        return df
+    
+    def _gen_df(self, row_count: int):
         df = self.empty_df(row_count)
 
-        for col in self.df_spec.columns:
-            df = col.generate(df, df_builder=self)
-
-        # TODO, this should not be here.
-        if "name" in self.df_spec._options:
-            self.register_df(self.df_spec._options["name"], df)
+        context = {"dataframes": self.parrot.dataframes}
+        for col_spec in self.df_spec.columns:
+            df = self.generate_column(df, col_spec, context)
 
         return df
 
     def register_df(self, name: str, df: DataFrame):
-        self.parrot.generated_df[name] = df
+        self.parrot.dataframes[name] = df
+
+    def generate(self, row_count: int):
+        df = self._gen_df(row_count)
+
+        if "name" in self.df_spec._options:
+            self.register_df(self.df_spec._options["name"], df)
+
+        return df

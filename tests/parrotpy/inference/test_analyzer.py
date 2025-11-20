@@ -4,21 +4,23 @@ from fitter import Fitter
 from fitter import Fitter, get_common_distributions
 from pprint import pprint
 
+from parrotpy import functions as PF
 from parrotpy.functions.stats import normal, uniform
 from parrotpy.inference.entity_map import EntityType
-from parrotpy.inference.analyzer import Analyzer
+from parrotpy.inference.analyzer import Analyzer, InferredEntity
 from parrotpy.code_gen.column_code_gen import inferred2code
 
 
 @pytest.fixture
-def nums_df(parrot):
+def sample_df(parrot):
     n = 1000
     builder = (parrot.df_builder()
         .options(name="nums_df")
+        .build_column("name", "string", PF.common.person_name())
         .build_column("u_nums", "double", uniform(n=1, min_value=0, max_value=100))
         .build_column("n_nums", "double", normal(n=1, mean=10, std_dev=2))
     )
-    df = builder.gen_df(n)
+    df = builder.generate(n)
     return df
 
 @pytest.mark.skip(reason="too slow")
@@ -39,8 +41,8 @@ def test_ks_test():
     assert dist_name == "uniform"
 
 @pytest.mark.skip(reason="too slow")
-def test_distribution(parrot, nums_df):
-    df = nums_df
+def test_distribution(parrot, sample_df):
+    df = sample_df
     anlz = parrot.analyzer()
 
     result = anlz.analyze_numeric_column(df, "u_nums")
@@ -50,9 +52,10 @@ def test_distribution(parrot, nums_df):
     print(result)
     assert(result["entity_type"] == EntityType.DIST_NORMAL.value)
 
-def test_analyze_df(parrot, nums_df):
-    dfa = parrot.analyzer().analyze_df(nums_df)
-    pprint(dfa.to_dict())
+def test_analyze_df(parrot, sample_df):
+    df_spec = parrot.analyzer().analyze_df(sample_df)
 
-    code = inferred2code(dfa)
+    pprint(df_spec.to_dict())
+
+    code = inferred2code(df_spec)
     print(code)

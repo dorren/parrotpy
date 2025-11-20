@@ -5,7 +5,7 @@ from parrotpy import functions as PF
 # from parrotpy.functions import common as C
 
 class EntityType(Enum):
-    PERSON_NAME = "person name"
+    PERSON = "person"
     CHOICES = "choices"
     DIST_NORMAL = "dist.normal"
     DIST_UNIFORM = "dist.uniform"
@@ -34,7 +34,7 @@ class EntityMap(UserDict):
     @classmethod
     def default(cls):
         em = cls()
-        em.register("person name",  PF.common.person_name)
+        em.register("person",       PF.common.person_name)
         em.register("choices",      PF.core.choices)
         em.register("dist.normal",  PF.stats.normal)
         em.register("dist.uniform", PF.stats.uniform)

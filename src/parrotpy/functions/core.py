@@ -123,14 +123,13 @@ def _fk_references(local_df: DataFrame, fk_df: DataFrame, fk_col_name:str, new_c
 
 def fk_references(fk_path: str):
     """ define a foreign key column. parameter shall be in the format of "<df_name>.<column_name>", 
-        For example, "customers.cust_id". Referenced df should existed in parrot object's generated_df. 
+        For example, "customers.cust_id". Referenced df should existed in parrot object. 
     """
 
-    
-    def generate(df: DataFrame, df_builder, col_spec) -> DataFrame:
+    def generate(df: DataFrame, col_spec, context:dict) -> DataFrame:
         df_name, fk_col_name = fk_path.split(".")
-        fk_df = df_builder.find_df(df_name)
-
+        fk_df = context["dataframes"].get(df_name)
+         
         df2 = _fk_references(df, fk_df, fk_col_name, col_spec.name)
         return df2
 
@@ -203,17 +202,16 @@ def weighted_choice(elements: list, weights: list, seed: int=None) -> DataFrame:
         DataFrame: Spark DataFrame with new column "weighted_choice".
     """
 
-    def generate(df: DataFrame, df_builder, col_spec) -> DataFrame:
-        output_col_name = col_spec.name
-        rand_col_name = f"_{output_col_name}_rand"
+    def generate(df: DataFrame, col_spec, context) -> DataFrame:
+        rand_col_name = f"_{col_spec.name}_rand"
         choice_col = _weighted_choice(elements, weights, rand_col_name, seed)
-        df = (df
+        
+        return (df
             .withColumn(rand_col_name, F.rand(seed)) 
-            .withColumn(output_col_name, choice_col)
+            .withColumn(col_spec.name, choice_col)
             .drop(rand_col_name)
         )
-        return df
-    
+
     return generate
 
 __all__ = [

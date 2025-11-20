@@ -151,7 +151,7 @@ def test_weighted_choice(parrot):
     df = (parrot.df_builder()
         .options(name="letters")
         .build_column("letter", "string", PF.weighted_choice(elements, weights))
-        .gen_df(row_count)
+        .generate(row_count)
     )
 
     df.groupBy("letter").count().orderBy("letter").show(5, False)

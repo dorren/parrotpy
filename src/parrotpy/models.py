@@ -4,42 +4,29 @@ from typing import Any
 
 from .utils import Snapshot
 
+class ColumnValue:
+    """ value in a dataframe column"""
+    pass
 
 class ColumnSpec:
-    def __init__(self, name: str, data_type: str, col_val: Any):
+    def __init__(self, name: str, data_type: str, col_val: ColumnValue):
         self.name = name
         self.data_type = data_type
-        self.col_val = col_val
-
-    def generate(self, df: DataFrame, df_builder=None) -> DataFrame:
-        return self.col_val.generate(df, df_builder, self)
+        self.value = col_val
 
     def __str__(self):
         cls_name = self.__class__.__name__
         return f"{cls_name}({self.__dict__})"
+    
+    def to_dict(self):
+        val_attrs = self.value.to_dict() if hasattr(self.value, "to_dict") else str(self.value)
 
-
-class NativeColumn(ColumnSpec):
-    """ column value is a native spark.sql.Column value """
-    def generate(self, df: DataFrame, df_builder=None) -> DataFrame:
-        df = df.withColumn(self.name, self.col_val.cast(self.data_type))
-        return df
-
-class CustomColumn(ColumnSpec):
-    """ column value is a native spark.sql.Column """
-    def generate(self, df: DataFrame, df_builder) -> DataFrame:
-        return self.col_val(df, df_builder, self)
-
-class SnapshotColumn(ColumnSpec):
-    def __init__(self, name: str, data_type: str, col_val: Snapshot):
-        super().__init__(name, data_type, col_val)
-
-    def generate(self, df: DataFrame, df_builder=None):
-        ctx = {"df": df, "df_builder": df_builder}
-        computed_value = self.col_val.invoke(ctx)
-
-        df = df.withColumn(self.name, computed_value.cast(self.data_type))
-        return df
+        result = {
+            "name": self.name,
+            "data_type": self.data_type,
+            "value": val_attrs
+        }
+        return result
 
 class DfSpec:
     def __init__(self):
@@ -52,13 +39,19 @@ class DfSpec:
 
         self._options = {**self._options, **filtered_dict}
 
-    def add_column(self, col: NativeColumn):
-        self.columns.append(col)
+    def add_column(self, col_spec: ColumnSpec):
+        self.columns.append(col_spec)
         return self
     
     def __str__(self):
         result = f"{self.__class__}({self._options})"
         for c in self.columns:
             result += f"\n  {c}"
+
+        return result
+
+    def to_dict(self):
+        result = {}
+        result["columns"] = [col.to_dict() for col in self.columns]
 
         return result

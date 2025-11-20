@@ -1,4 +1,4 @@
-from collections import Counter
+from collections import Counter, UserDict
 import logging
 import numpy as np
 from pyspark.sql import DataFrame
@@ -7,54 +7,12 @@ from fitter import Fitter
 from typing import List
 
 from .entity_map import EntityType, EntityMap
-from ..models import DfSpec, NativeColumn
+from ..models import DfSpec, ColumnSpec, ColumnValue
 from .. import functions as PF
     
-class InferredColumn:
-    data_type_key   = "data_type"
-    entity_type_key = "entity_type"
-
-    def __init__(self, name: str, data_type: str, entity_type: str="unknown", **kwargs: dict):
-        self.name = name
-        self.data_type = data_type
-        self.entity_type = entity_type
-        self.kwargs = kwargs
-
+class InferredEntity(UserDict, ColumnValue):
     def to_dict(self):
-        result = {
-            "name": self.name,
-            self.data_type_key:   self.data_type,
-            self.entity_type_key: self.entity_type
-        }
-        result = {**result, **self.kwargs}
-        return result      
-
-class InferredDf:
-    def __init__(self):
-        self.columns = []
-    
-    def add_column(self, col: InferredColumn):
-        self.columns.append(col)
         return self
-
-    def to_dict(self):
-        result = {}
-        result["columns"] = [col.to_dict() for col in self.columns]
-
-        return result
-    
-    def to_df_spec(self, entity_map: EntityMap = None):
-        if entity_map is None:
-            entity_map = EntityMap.default()
-
-        df_spec = DfSpec()
-        for col in self.columns:
-            fn = entity_map.get(col.entity_type)
-            fn_val = fn(**col.kwargs)
-            col_spec = NativeColumn(col.name, col.data_type, fn_val)
-            df_spec.add_column(col_spec)
-
-        return df_spec
 
 
 class NLPSingleton(object):
@@ -91,7 +49,7 @@ class Analyzer:
     def infer_distribution(self, nums: list, distributions: List[str]):
         """ get best matched random distribution name and attributes 
         """
-        etk = InferredColumn.entity_type_key
+        ettt = "entity_type"
 
         f = Fitter(nums, distributions=distributions)
         f.fit()
@@ -100,20 +58,23 @@ class Analyzer:
         if dist_name == "norm":
             mean = np.mean(nums).item()
             sd = np.std(nums, ddof=1).item()
-            return {
-                etk: EntityType.DIST_NORMAL.value,
-                "mean": round(mean, 3),
-                "std_dev": round(sd, 3)
-            }
+            return InferredEntity(
+                entity_type = EntityType.DIST_NORMAL.value,
+                mean = round(mean, 3),
+                std_dev = round(sd, 3)
+            )
         elif dist_name == "uniform":
-            return {
-                etk: EntityType.DIST_UNIFORM.value,
-                "min_value": round(min(nums), 3),
-                "max_value": round(max(nums), 3)
-            }
+            return InferredEntity(
+                entity_type = EntityType.DIST_UNIFORM.value,
+                min_value = round(min(nums), 3),
+                max_value = round(max(nums), 3)
+            )
         
-    def categorize_text(self, words: list):
-        pass
+    def categorize_text(self, df: DataFrame, col_name: str) -> InferredEntity:
+        texts = df.select(col_name).rdd.map(lambda row: row[0]).collect()
+        category = NLPSingleton().categorize(texts)
+        category = category.lower()
+        return InferredEntity(entity_type=category)
 
     def analyze_numeric_column(self, 
                 df: DataFrame, 
@@ -134,24 +95,28 @@ class Analyzer:
         num_types = ["int", "double"] #, "array<int>", "array<double>"]
         return data_type in num_types
 
-    def analyze_df(self, df: DataFrame) -> InferredDf:
-        ifr_df = InferredDf()
+    def analyze_df(self, df: DataFrame) -> DfSpec:
+        df_spec = DfSpec()
+        df.cache()
 
         for field in df.schema.fields:
             col_name = field.name
             data_type = field.dataType.simpleString()
             col_nullable = field.nullable
 
-            if self.is_numeric(data_type):
-                dist_attrs = self.analyze_numeric_column(df, col_name)
-                et = dist_attrs.get(InferredColumn.entity_type_key)
-                del dist_attrs[InferredColumn.entity_type_key]
-
-                col = InferredColumn(col_name, data_type, et, **dist_attrs)
-                ifr_df.add_column(col)
+            if data_type == "string":
+                inferred_entity = self.categorize_text(df, col_name)
+                col_spec = ColumnSpec(col_name, data_type, inferred_entity)
+                df_spec.add_column(col_spec)
+            elif self.is_numeric(data_type):
+                inferred_entity = self.analyze_numeric_column(df, col_name)
+                col_spec = ColumnSpec(col_name, data_type, inferred_entity)
+                df_spec.add_column(col_spec)
             else:
-                logging.info("unimplemented")
+                logging.info(f"{data_type} unimplemented")
 
-        return ifr_df
+        df.unpersist()
+
+        return df_spec
 
         

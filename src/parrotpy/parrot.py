@@ -14,7 +14,7 @@ class Parrot:
     def __init__(self, spark: SparkSession):
         self.spark = spark
         self.entity_map = EntityMap.default()
-        self.generated_df = GeneratedDF()
+        self.dataframes = GeneratedDF()
     
     def df_builder(self) -> DfBuilder:
         return DfBuilder(parrot=self)

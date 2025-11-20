@@ -15,7 +15,7 @@ def src_code():
             
             n = 100
             print(f"Starting generating {n} rows ...")
-            return builder.gen_df(n)
+            return builder.generate(n)
         """)
 
 def test_import(src_code):

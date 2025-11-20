@@ -2,8 +2,8 @@ import ast
 import black
 import textwrap
 from typing import List, Any
-from ..models import DfSpec
-from ..inference.analyzer import InferredDf
+from ..models import DfSpec, ColumnSpec
+from ..inference.analyzer import InferredEntity
 from ..inference.entity_map import EntityMap
 from ..utils import fn_path
 
@@ -17,7 +17,7 @@ def _base_template():
             
             n = 100
             print(f"Starting generating {n} rows ...")
-            return builder.gen_df(n)
+            return builder.generate(n)
         """)
 
 def dict_to_ast_keywords(data_dict):
@@ -100,11 +100,15 @@ class ColumnCodeGen(ast.NodeTransformer):
             # 2. Create the Call node (e.g., current_chain.build_column())
             # call_args = self.fn_args[i]
             # print(call_args)
-            column_fn = self.entity_map[column_spec.entity_type]
+            entity_type = column_spec.value.get("entity_type")
+            del column_spec.value["entity_type"]
+            entity_kwargs = column_spec.value
+
+            column_fn = self.entity_map[entity_type]
             self.fn_imports[fn_path(column_fn)] = build_import_stmt(column_fn)
 
             fn_name = column_fn.__name__
-            ast_kwargs = dict_to_ast_keywords(column_spec.kwargs)
+            ast_kwargs = dict_to_ast_keywords(entity_kwargs)
             fn_call = ast.Expr(
                     value=ast.Call(
                         func=ast.Name(id=fn_name, ctx=ast.Load()),
@@ -216,17 +220,17 @@ def beautify_code(code: str):
 
     return fmt_code
 
-def inferred2code(inferred_df: InferredDf) -> str:
+def inferred2code(df_spec: DfSpec) -> str:
     """ convert DfSpec to Python code """
-    tree = build_ast(inferred_df)
+    tree = build_ast(df_spec)
     generated_code = ast.unparse(tree)
     code = beautify_code(generated_code)
 
     return code
     
-def inferred2df(spark, inferred_df: InferredDf) -> str:
+def inferred2df(spark, df_spec: DfSpec) -> str:
     """ convert DfSpec to Python code """
-    tree = build_ast(inferred_df)
+    tree = build_ast(df_spec)
     code = ast.unparse(tree)
     # compile original node doesn't work because it can't handle parentheses 
     # surrounded expression, so has to parse src code.
