@@ -186,10 +186,10 @@ def choices(elements: list, weights: list=None, seed: int=None) -> Column:
     if weights is None:
         return _uniform_choice(elements, seed)
     else:
-        return weighted_choice(elements, weights, seed)
+        return weighted_choices(elements, weights, seed)
 
         
-def weighted_choice(elements: list, weights: list, seed: int=None) -> DataFrame:
+def weighted_choices(elements: list, weights: list, seed: int=None) -> DataFrame:
     """Add a column with weighted random choice from given elements.
 
     Args:
@@ -229,5 +229,5 @@ __all__ = [
     "_uniform_choice",
     "_weighted_choice",
     "choices",
-    "weighted_choice"
+    "weighted_choices"
 ]

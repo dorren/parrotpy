@@ -9,6 +9,7 @@ class EntityType(Enum):
     CHOICES = "choices"
     DIST_NORMAL = "dist.normal"
     DIST_UNIFORM = "dist.uniform"
+    UNKNOWN = "unknown"
     
 class EntityMap(UserDict):
 
@@ -25,7 +26,7 @@ class EntityMap(UserDict):
         fn = super().get(entity_type)
 
         if fn is None:
-            logging.warning(f"no function found for {entity_type}")
+            logging.warning(f"no function found for entity_type {entity_type}")
             fn = PF.core.nothing()
             
         return fn
@@ -34,7 +35,9 @@ class EntityMap(UserDict):
     @classmethod
     def default(cls):
         em = cls()
+        em.register("unknown",      PF.nothing)
         em.register("person",       PF.common.person_name)
+        em.register("address",      PF.common.address)
         em.register("choices",      PF.core.choices)
         em.register("dist.normal",  PF.stats.normal)
         em.register("dist.uniform", PF.stats.uniform)

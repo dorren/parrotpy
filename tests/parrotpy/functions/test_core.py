@@ -143,14 +143,14 @@ def test__weighted_choice(spark):
 
     df.groupBy("selected").count().orderBy("selected").show(5, False)
 
-def test_weighted_choice(parrot):
+def test_weighted_choices(parrot):
     elements = ['A', 'B', 'C', 'D', 'E']
     weights =  [0.1, 0.2, 0.3, 0.3, 0.1]
     row_count = 10000
 
     df = (parrot.df_builder()
         .options(name="letters")
-        .build_column("letter", "string", PF.weighted_choice(elements, weights))
+        .build_column("letter", "string", PF.weighted_choices(elements, weights))
         .generate(row_count)
     )
 

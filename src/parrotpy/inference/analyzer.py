@@ -2,6 +2,7 @@ from collections import Counter, UserDict
 import logging
 import numpy as np
 from pyspark.sql import DataFrame
+from pyspark.sql import functions as F
 from pyspark.sql.types import StructField
 from fitter import Fitter
 from typing import List
@@ -36,6 +37,7 @@ class NLPSingleton(object):
                 # print(f"Text: {ent.text}, Label: {ent.label_}")            
 
         counter = Counter(acc)
+        print(counter.most_common(3))
         return counter.most_common(1)[0][0]
     
 class Analyzer:
@@ -44,6 +46,7 @@ class Analyzer:
 
     def __init__(self, parrot):
         self.parrot = parrot
+        self._options = {"choices_size": 100}
 
 
     def infer_distribution(self, nums: list, distributions: List[str]):
@@ -74,7 +77,10 @@ class Analyzer:
         texts = df.select(col_name).rdd.map(lambda row: row[0]).collect()
         category = NLPSingleton().categorize(texts)
         category = category.lower()
-        return InferredEntity(entity_type=category)
+        if category in [x.value for x in EntityType]:
+            return InferredEntity(entity_type=category)
+        else:
+            return InferredEntity(entity_type=EntityType.UNKNOWN.value)
 
     def analyze_numeric_column(self, 
                 df: DataFrame, 
@@ -95,6 +101,31 @@ class Analyzer:
         num_types = ["int", "double"] #, "array<int>", "array<double>"]
         return data_type in num_types
 
+    def check_choices(self, df: DataFrame, col_name:str):
+        """ check if a column is categorical (choices) """
+        rows_count = df.count()
+        limit_size = self._options["choices_size"]
+
+        stats_df = (df
+            .groupBy(col_name).count()
+            .orderBy(F.desc("count"))
+            .limit(limit_size))
+        actual_count = stats_df.agg(F.sum("count")).collect()[0][0]
+
+        if actual_count == rows_count:
+            elems =   [r[0] for r in stats_df.select(col_name).collect()]
+            weights = [r[0] for r in stats_df.select("count").collect()]
+            weights = [w / sum(weights) for w in weights]
+            return InferredEntity(
+                entity_type = EntityType.CHOICES.value,
+                elements = elems,
+                weights = weights
+            )
+        else:
+            return InferredEntity(
+                entity_type = EntityType.UNKNOWN.value
+            )
+
     def analyze_df(self, df: DataFrame) -> DfSpec:
         df_spec = DfSpec()
         df.cache()
@@ -103,6 +134,12 @@ class Analyzer:
             col_name = field.name
             data_type = field.dataType.simpleString()
             col_nullable = field.nullable
+
+            entity = self.check_choices(df, col_name)
+            if entity["entity_type"] == EntityType.CHOICES.value:
+                col_spec = ColumnSpec(col_name, data_type, entity)
+                df_spec.add_column(col_spec)
+                continue
 
             if data_type == "string":
                 inferred_entity = self.categorize_text(df, col_name)

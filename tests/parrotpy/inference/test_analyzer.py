@@ -10,13 +10,28 @@ from parrotpy.inference.entity_map import EntityType
 from parrotpy.inference.analyzer import Analyzer, InferredEntity
 from parrotpy.code_gen.column_code_gen import inferred2code
 
+@pytest.fixture
+def letters_df(parrot):
+    letters = [chr(x+65) for x in range(26)] # A-Z
+    row_count = 10000
+
+    df = (parrot.df_builder()
+        .options(name="letters")
+        .build_column("letter", "string", PF.choices(letters))
+        .generate(row_count)
+    )
+    return df
 
 @pytest.fixture
 def sample_df(parrot):
+    letters = [chr(x+65) for x in range(26)]
+
     n = 1000
     builder = (parrot.df_builder()
         .options(name="nums_df")
-        .build_column("name", "string", PF.common.person_name())
+        .build_column("name",    "string", PF.common.person_name())
+        .build_column("address", "string", PF.common.address())
+        .build_column("letter", "string", PF.choices(letters))
         .build_column("u_nums", "double", uniform(n=1, min_value=0, max_value=100))
         .build_column("n_nums", "double", normal(n=1, mean=10, std_dev=2))
     )
@@ -52,9 +67,12 @@ def test_distribution(parrot, sample_df):
     print(result)
     assert(result["entity_type"] == EntityType.DIST_NORMAL.value)
 
+def test_choices(parrot, letters_df):
+    df_spec = parrot.analyzer().analyze_df(letters_df)
+    pprint(df_spec.to_dict())
+
 def test_analyze_df(parrot, sample_df):
     df_spec = parrot.analyzer().analyze_df(sample_df)
-
     pprint(df_spec.to_dict())
 
     code = inferred2code(df_spec)

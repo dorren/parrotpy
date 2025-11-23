@@ -17,5 +17,5 @@ __all__=[
     "rand_array", 
     "rand_elem_or_array",
     "timestamp_between",
-    "weighted_choice"
+    "weighted_choices"
     ]
