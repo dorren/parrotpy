@@ -117,7 +117,7 @@ def generate_synthetic_data(spark):
     )
     n = 100
     print(f"Starting generating {n} rows ...")
-    return builder.gen_df(n)
+    return builder.generate(n)
 ```
 
 # System Design
