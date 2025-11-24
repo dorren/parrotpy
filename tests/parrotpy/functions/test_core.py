@@ -40,7 +40,7 @@ def test_rand_str(spark):
 def test_regex_str(spark):
     n = 10
     df = spark.range(n)
-    pattern = F.lit((r"[A-Z]{3}-[0-9]{4}"))
+    pattern = F.lit(r"[A-Z]{3}-[0-9]{4}")
     df = df.withColumn("s", PF.regex_str(pattern))
     df.show(10, False)
     assert df.count() == n

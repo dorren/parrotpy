@@ -54,7 +54,6 @@ def regex_str(pattern:str) -> Column:
     regex_str("[A-Z]{3}-[0-9]{4}")    # 3 letter, 4 digits
     """
     return rstr.xeger(pattern)
-    
 
 def rand_array(n: int, gen_fn, seed=None) -> Column:
     ''' 

@@ -1,21 +1,25 @@
 <img src="docs/images/parrotpy_logo.png" width="300" height="300" />
 
+
+
 # ParrotPy
 
 ParrotPy is a test/synthetic data generation tool for [Apache Spark](https://github.com/apache/spark).
 
+**ALPHA stage, everything is subject to changed.**
+
 # Flows
-<img src="docs/images/parrot_flows.png" />
 
 * Build test data from scratch.
-* Or analyze existing DF to generate a json spec file, and generate test data from it.
-* For more customization, generate python code from spec json file and make tweaks, before generating test data.
+* Or analyze existing DF to generate a json config file, and generate test data from it.
+* For more customization, generate python code from json file and make tweaks, before generating test data.
 
 # Usage
 
 ## Build from Scratch
 ```python
 from parrotpy import Parrot
+from pyspark.sql import functions as F
 from parrotpy import functions as PF
 
 parrot = Parrot(seed=123)
@@ -32,6 +36,7 @@ df = (parrot
   .build_column("start_date",      "date", PF.date_between("2000-01-01", "2025-12-31"))
   .build_column("last_login", "timestamp", PF.timestamp_between("2025-11-14 00:00:00", 
                                                                 "2025-11-15 00:00:00"))
+  .build_column("license_plate", "string", PF.regex_str(F.lit(r"[A-Z]{3}-[0-9]{4}")))
   .generate(1000)
 )
 ```
@@ -114,3 +119,7 @@ def generate_synthetic_data(spark):
     print(f"Starting generating {n} rows ...")
     return builder.gen_df(n)
 ```
+
+# System Design
+
+<img src="docs/images/parrot_flows.png" />
