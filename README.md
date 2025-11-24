@@ -98,7 +98,7 @@ json_str = json.dumps(df_spec.to_dict())
 
 # convert analysis to code
 from parrotpy.code_gen.column_code_gen import inferred2code
-code = inferred2code(df_analysis)
+code = inferred2code(df_spec)
 print(code)
 
 # generated code
