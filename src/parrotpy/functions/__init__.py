@@ -1,14 +1,15 @@
 from .core import *
-from . import common
-from . import stats
+from .faker import faker
+from . import common, stats
 
 __all__=[
-    "common", 
+    "common",
     "stats",
 
     "auto_increment",
     "choices",
     "date_between",
+    "faker", 
     "fk_references",
     "nothing",
     "rand_str", 

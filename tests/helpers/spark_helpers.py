@@ -14,4 +14,9 @@ def spark():
 
     return spark
 
+def assert_df_equal(df1, df2):
+    """Assert that two Spark DataFrames are equal."""
+    assert df1.schema == df2.schema, "Schemas do not match"
+    assert df1.subtract(df2).union(df2.subtract(df1)).count() == 0, "DataFrames content do not match"
+    
 __all__ = ["spark"]

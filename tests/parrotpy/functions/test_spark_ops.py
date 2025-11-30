@@ -116,6 +116,11 @@ def test_types(spark):
     col = F.lit(None)
     print(isinstance(col, Column))
 
+def test_mono_id(spark):
+    n = 10
+    df = spark.range(n).withColumn("mono_id", F.monotonically_increasing_id() + 1)
+    df.show(n, False)
+
 
 
 

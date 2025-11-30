@@ -9,7 +9,7 @@ def test_use_fk(parrot):
         parrot.df_builder()
         .options(name="customers")
         .build_column("cust_id", "int", PF.auto_increment(start=100))
-        .build_column("name", "string", PF.common.person_name())
+        .build_column("name", "string", PF.faker("name"))
         .generate(20)
     )
 

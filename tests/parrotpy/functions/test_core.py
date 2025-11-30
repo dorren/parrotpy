@@ -1,10 +1,12 @@
 import pytest
 
+from faker import Faker
 import numpy as np
 from pyspark.sql.functions import udf
-from pyspark.sql.types import ArrayType, DoubleType
+from pyspark.sql.types import MapType, StringType, ArrayType, DoubleType
 from pyspark.sql import functions as F
 from pyspark.testing import assertDataFrameEqual
+
 
 from parrotpy import functions as PF
 from helpers.test_helpers import benchmark

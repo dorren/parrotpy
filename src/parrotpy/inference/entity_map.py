@@ -2,7 +2,6 @@ from collections import UserDict
 from enum import Enum
 import logging
 from parrotpy import functions as PF
-# from parrotpy.functions import common as C
 
 class EntityType(Enum):
     PERSON = "person"
@@ -38,7 +37,7 @@ class EntityMap(UserDict):
         em.register("unknown",      PF.nothing)
         em.register("person",       PF.common.person_name)
         em.register("address",      PF.common.address)
-        em.register("choices",      PF.core.choices)
+        em.register("choices",      PF.choices)
         em.register("dist.normal",  PF.stats.normal)
         em.register("dist.uniform", PF.stats.uniform)
 
