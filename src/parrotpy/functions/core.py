@@ -125,11 +125,12 @@ def fk_references(fk_path: str):
         For example, "customers.cust_id". Referenced df should existed in parrot object. 
     """
 
-    def generate(df: DataFrame, col_spec, context:dict) -> DataFrame:
+    def generate(df: DataFrame, context: dict) -> DataFrame:
+        col_name = context.get("column_name")
         df_name, fk_col_name = fk_path.split(".")
         fk_df = context["dataframes"].get(df_name)
          
-        df2 = _fk_references(df, fk_df, fk_col_name, col_spec.name)
+        df2 = _fk_references(df, fk_df, fk_col_name, col_name)
         return df2
 
     return generate
@@ -201,13 +202,14 @@ def weighted_choices(elements: list, weights: list, seed: int=None) -> DataFrame
         DataFrame: Spark DataFrame with new column "weighted_choice".
     """
 
-    def generate(df: DataFrame, col_spec, context) -> DataFrame:
-        rand_col_name = f"_{col_spec.name}_rand"
+    def generate(df: DataFrame, context: dict) -> DataFrame:
+        col_name = context.get("column_name")
+        rand_col_name = f"_{col_name}_rand"
         choice_col = _weighted_choice(elements, weights, rand_col_name, seed)
         
         return (df
             .withColumn(rand_col_name, F.rand(seed)) 
-            .withColumn(col_spec.name, choice_col)
+            .withColumn(col_name, choice_col)
             .drop(rand_col_name)
         )
 

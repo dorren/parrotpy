@@ -25,15 +25,17 @@ def spark_faker(faker_fn_name: str, seed: int = None):
     """Return a Faker generated value by function name.
     """
     
-    def generate(df: DataFrame, col_spec, context) -> DataFrame:
+    def generate(df: DataFrame, context: dict) -> DataFrame:
+        col_name = context.get("column_name")
+
         if seed is None:
-            return df.withColumn(col_spec.name, faker_udf(F.lit(faker_fn_name)))
+            return df.withColumn(col_name, faker_udf(F.lit(faker_fn_name)))
         else:
-            seed_col = f"_{col_spec.name}_seed"
+            seed_col = f"_{col_name}_seed"
 
             return (df
                 .withColumn(seed_col, F.monotonically_increasing_id() + seed) 
-                .withColumn(col_spec.name, faker_udf(F.lit(faker_fn_name), seed_col))
+                .withColumn(col_name, faker_udf(F.lit(faker_fn_name), seed_col))
                 .drop(seed_col)
             )
 

@@ -27,6 +27,14 @@ class ColumnSpec:
             "value": val_attrs
         }
         return result
+    
+    def to_context(self) -> Any:
+        """ convert to function context """
+        return {
+            "column_name":  self.name,
+            "column_type":  self.data_type,
+            "column_value": self.value
+        }
 
 class DfSpec:
     def __init__(self):

@@ -49,22 +49,26 @@ class DfBuilder:
         return self.parrot.dataframes.get(df_name)
 
     def generate_column(self, df: DataFrame, col_spec: ColumnSpec, context: dict):
-        col_val = col_spec.value
+        col_name = col_spec.name
+        col_type = col_spec.data_type
+        col_val  = col_spec.value
+        
         if isinstance(col_val, Column):
-            df = df.withColumn(col_spec.name, col_val.cast(col_spec.data_type))
+            df = df.withColumn(col_name, col_val.cast(col_type))
         elif callable(col_val):
-            df = col_val(df, col_spec, context)
+            column_ctx = {**context, **col_spec.to_context()}
+            df = col_val(df, column_ctx)
         else:
-            logging.warning(f"don't know how to handle column {col_spec.name} with value {col_val}")
+            logging.warning(f"don't know how to handle column {col_name} with value {col_val}")
         
         return df
     
     def _gen_df(self, row_count: int):
         df = self.empty_df(row_count)
 
-        context = {"dataframes": self.parrot.dataframes}
+        builder_ctx = {"dataframes": self.parrot.dataframes}
         for col_spec in self.df_spec.columns:
-            df = self.generate_column(df, col_spec, context)
+            df = self.generate_column(df, col_spec, builder_ctx)
 
         return df
 
