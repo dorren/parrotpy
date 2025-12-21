@@ -44,4 +44,43 @@ def normal(n: int = 1, mean: float = 0.0, std_dev: float = 1.0, seed: int = None
     fn = partial(normal_1, mean=mean, stddev=std_dev, to_int=to_int)
     col_val = rand_elem_or_array(n, fn, seed)
     return col_val
+
+def mixed_normal(params_list, seed: int = None):
+    """
+    Creates a DataFrame with a mixture of normal distributions.
+    
+    :param params_list: List of dicts e.g., [{'mean': 10, 'stddev': 2, 'prob': 0.3}, ...]
+    """
+    def _mixed_normal(params_list, rand_col_name, seed): 
+        cumulative_prob = 0.0
+        mixture_expression = F.lit(None)
+        z = F.randn(seed)
+
+        for p in params_list:
+            lower_bound = cumulative_prob
+            upper_bound = cumulative_prob + p['prob']
+            
+            component_val = F.lit(p['mean']) + (F.lit(p['stddev']) * z)
+            
+            mixture_expression = F.when(
+                (F.col(rand_col_name) >= lower_bound) & (F.col(rand_col_name) < upper_bound),
+                component_val
+            ).otherwise(mixture_expression)
+            
+            cumulative_prob = upper_bound
+
+        return mixture_expression
+
+    def generate(df: DataFrame, context: dict) -> DataFrame:
+        col_name = context.get("column_name")
+        rand_col_name = f"_{col_name}_rand"
+        result_col = _mixed_normal(params_list, rand_col_name, seed)
+        
+        return (df
+            .withColumn(rand_col_name, F.rand(seed)) 
+            .withColumn(col_name, result_col)
+            .drop(rand_col_name)
+        )
+
+    return generate
     

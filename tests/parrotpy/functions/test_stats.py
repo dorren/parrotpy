@@ -5,7 +5,7 @@ from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
 
 from helpers.spark_helpers import spark
-from parrotpy.functions.stats import normal
+from parrotpy.functions.stats import normal, mixed_normal
 from helpers.test_helpers import benchmark
 
 
@@ -58,3 +58,38 @@ def test_normal_array_no_seed(spark):
     df = spark.range(row_count)
     df = df.withColumn(col_name, samples)
     df.show(3, False)
+
+def test_mixed_normal(spark):
+    """Test that the mixture_normal function generates values approximating the combined distribution."""
+    row_count = 1000
+    params = [
+        {'mean': 10,  'stddev': 2,  'prob': 0.3},
+        {'mean': 50,  'stddev': 10, 'prob': 0.5},
+        {'mean': 100, 'stddev': 5,  'prob': 0.2}
+    ]
+    seed = 123
+    ctx = {"column_name": "mixed_norm"}
+
+    gen_fn = mixed_normal(params, seed=seed)
+    df = spark.range(row_count)
+    df = gen_fn(df, ctx)
+    assert df.count() == row_count, "Row count does not match"
+
+    # view histogram in R
+    #
+    # rows = (df
+    #     .select("mixed_norm")
+    #     .withColumn("mixed_norm", F.round("mixed_norm", F.lit(2)))
+    #     .collect()
+    # )
+    # values = [r["mixed_norm"] for r in rows]
+
+    # print(values[0:500])
+    # print()
+    # print(values[500:])
+
+    # in R
+    # x1 = c(...)
+    # x2 = c(...)
+    # x=unlist(c(x1, x2))
+    # hist(x, breaks=100)

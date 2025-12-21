@@ -100,7 +100,10 @@ json_str = json.dumps(df_spec.to_dict())
 from parrotpy.code_gen.column_code_gen import inferred2code
 code = inferred2code(df_spec)
 print(code)
+```
 
+### Generated Code
+```python
 # generated code
 from parrotpy.functions.stats import normal
 from parrotpy.functions.stats import uniform
@@ -113,13 +116,10 @@ def generate_synthetic_data(spark):
         parrot.df_builder()
         .options(name="df1")
         .build_column("uniform_nums", "double", uniform(min_value=0.26, max_value=99.88))
-        .build_column("normal_nums", "double", normal(mean=10.08, std_dev=2.044))
+        .build_column("normal_nums",  "double", normal(mean=10.08, std_dev=2.044))
     )
     n = 100
     print(f"Starting generating {n} rows ...")
     return builder.generate(n)
 ```
 
-# System Design
-
-<img src="docs/images/parrot_flows.png" />

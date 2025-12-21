@@ -70,12 +70,12 @@ def rand_elem_or_array(n: int, gen_fn, seed=None) -> Column:
     else:
         return rand_array(n, gen_fn, seed)
 
-def date_between(start_date_str:str, end_date_str:str) -> Column:
+def date_between(start_date:str, end_date:str) -> Column:
     """ generate random dates between the parameters. 
         date str shall be in "YYYY-MM-DD" format.
     """
-    start_date = F.lit(start_date_str).cast("date")
-    end_date = F.lit(end_date_str).cast("date")
+    start_date = F.lit(start_date).cast("date")
+    end_date = F.lit(end_date).cast("date")
     
     return F.date_add(start_date,
         (F.round(F.rand() * (F.date_diff(end_date, start_date)))).cast("int")

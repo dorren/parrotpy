@@ -15,6 +15,10 @@ class InferredEntity(UserDict, ColumnValue):
     def to_dict(self):
         return self
 
+class UnknownEntity(InferredEntity):
+    def __init__(self):
+        super().__init__(entity_type=EntityType.UNKNOWN.value)
+
 
 class NLPSingleton(object):
     def __new__(cls):
@@ -52,7 +56,6 @@ class Analyzer:
     def infer_distribution(self, nums: list, distributions: List[str]):
         """ get best matched random distribution name and attributes 
         """
-        ettt = "entity_type"
 
         f = Fitter(nums, distributions=distributions)
         f.fit()
@@ -80,7 +83,7 @@ class Analyzer:
         if category in [x.value for x in EntityType]:
             return InferredEntity(entity_type=category)
         else:
-            return InferredEntity(entity_type=EntityType.UNKNOWN.value)
+            return UnknownEntity()
 
     def analyze_numeric_column(self, 
                 df: DataFrame, 
@@ -122,9 +125,7 @@ class Analyzer:
                 weights = weights
             )
         else:
-            return InferredEntity(
-                entity_type = EntityType.UNKNOWN.value
-            )
+            return UnknownEntity()
 
     def analyze_df(self, df: DataFrame) -> DfSpec:
         df_spec = DfSpec()
@@ -150,7 +151,8 @@ class Analyzer:
                 col_spec = ColumnSpec(col_name, data_type, inferred_entity)
                 df_spec.add_column(col_spec)
             else:
-                logging.info(f"{data_type} unimplemented")
+                logging.info(f"{col_name}({data_type}) not implemented")
+                df_spec.add_column(ColumnSpec(col_name, data_type, UnknownEntity()))
 
         df.unpersist()
 

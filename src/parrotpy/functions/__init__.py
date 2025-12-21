@@ -1,5 +1,5 @@
 from .core import *
-from .faker import faker
+from .faker import *
 from . import common, stats
 
 __all__=[
@@ -9,7 +9,8 @@ __all__=[
     "auto_increment",
     "choices",
     "date_between",
-    "faker", 
+    "faker",
+    "faker_array",
     "fk_references",
     "nothing",
     "rand_str", 

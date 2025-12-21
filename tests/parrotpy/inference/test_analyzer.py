@@ -31,9 +31,10 @@ def sample_df(parrot):
         .options(name="nums_df")
         .build_column("name",    "string", PF.common.person_name())
         .build_column("address", "string", PF.common.address())
-        .build_column("letter", "string", PF.choices(letters))
-        .build_column("u_nums", "double", uniform(n=1, min_value=0, max_value=100))
+        .build_column("state",   "string", PF.choices(["CA", "NY", "OH"]))
+        .build_column("uniform_nums", "double", uniform(n=1, min_value=0, max_value=100))
         .build_column("n_nums", "double", normal(n=1, mean=10, std_dev=2))
+        .build_column("birthday", "date", PF.date_between("1950-01-01", "2000-01-01"))       
     )
     df = builder.generate(n)
     return df

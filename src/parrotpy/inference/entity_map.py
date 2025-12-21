@@ -14,8 +14,9 @@ class EntityMap(UserDict):
 
     """ map entity type to the value generating function. For example:
 
-        entity type "person" would be mapped to parrotpy.functions.name()
-        entity type "uniform distribution" would be mapped to parrotpy.functions.stats.uniform()
+        entity type "person"       would be mapped to parrotpy.functions.common.person_name()
+        entity type "dist.normal"  would be mapped to parrotpy.functions.stats.normal()
+        entity type "dist.uniform" would be mapped to parrotpy.functions.stats.uniform()
     """
     def register(self, name: str, fn:callable):
         super().__setitem__(name, fn)

@@ -5,9 +5,10 @@ import logging
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql.functions import udf
-from pyspark.sql.types import StringType
+from pyspark.sql.types import ArrayType, StringType
 from pyspark.sql.window import Window
 
+from .stats import uniform
 
 @udf(returnType=StringType())
 def faker_udf(fn_name: str, seed: int = None):
@@ -43,5 +44,42 @@ def spark_faker(faker_fn_name: str, seed: int = None):
 
 faker = spark_faker
 
+@udf(returnType=ArrayType(StringType()))
+def faker_array_udf(size: int, fn_name: str, seeds: list = []):
+    faker = Faker()
 
-__all__ = ['faker']
+    try:
+        if len(seeds) == 0:
+            result = [getattr(faker, fn_name)() for i in range(size)]
+            return result
+        else:
+            result = []
+            for i in range(size):
+                faker.seed_instance(seeds[i])
+                result.append(getattr(faker, fn_name)())
+            return result
+    except Exception as e:
+        logging.error(f"Error calling Faker method '{fn_name}': {e}")
+        return F.lit(None)
+
+def faker_array(array_len: int, faker_fn_name: str, seed: int = None):
+    """Return an array of Faker generated values by function name.
+    """
+    def generate(df: DataFrame, context: dict) -> DataFrame:
+        col_name = context.get("column_name")
+
+        if seed is None:
+            return df.withColumn(col_name, faker_array_udf(F.lit(array_len), F.lit(faker_fn_name)))
+        else:
+            row_count = df.count()
+            seed_col = f"_{col_name}_seed"
+
+            return (df
+                .withColumn(seed_col, uniform(array_len, max_value=row_count, seed=seed, to_int=True)) 
+                .withColumn(col_name, faker_array_udf(F.lit(array_len), F.lit(faker_fn_name), seed_col))
+                .drop(seed_col)
+            )
+
+    return generate
+
+__all__ = ['faker', 'faker_array']
