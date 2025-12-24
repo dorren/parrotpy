@@ -1,38 +1,60 @@
+[build-system]
+requires = ["hatchling >= 1.26"]
+build-backend = "hatchling.build"
+
+[project]
+name = "parrotpy"
+version = "0.1.8"
+description = "spark test data generation tool"
+authors = [
+    {name = "Dorren Chen", email = "dorrenchen@gmail.com"}
+]
+keywords = ["pyspark", "test data", "synthetic data generation"]
+license = "MIT"
+readme = "README.md"
+
+requires-python = ">=3.9,<3.14"
+dependencies = [
+    "faker>=37.11.0",
+    "numpy>=1.26.0",
+    "pyspark>=3.5.5",
+    "fitter>=1.6.0",
+    "spacy>=3.8.8",
+    "black>=25.11.0",
+    "pyreadline3>=3.5.4",
+    "rstr>=3.2.2"
+]
+
+# https://pypi.org/classifiers/
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Testing"
+]
+
 [project.urls]
 homepage = "https://github.com/dorren/parrotpy.git"
 repository = "https://github.com/dorren/parrotpy.git"
 
 [tool.poetry]
 name = "parrotpy"
-version = "0.1.3"
+version = "0.1.8"
 description = "spark test data generation tool"
-authors = ["Dorren Chen <dorrenchen@gmail.com>"]
-keywords = ["pyspark", "test data", "synthetic data generation"]
-
-license = "MIT"
 readme = "README.md"
+authors = [
+    "Dorren Chen <dorrenchen@gmail.com>"
+]
 packages = [
     { include = "parrotpy", from="src" }
 ]
-include = ["docs/*"]
+include = ["docs/*", "Makefile"]
 
-[tool.poetry.dependencies]
-python = ">=3.9,<3.14"
-faker = ">=37.11.0"
-numpy = ">=1.26.0"
-pyspark = ">=3.5.5"
-fitter = ">=1.6.0"
-spacy = ">=3.8.8"
-black = ">=25.11.0"
-pyreadline3 = ">=3.5.4"
-rstr = ">=3.2.2"
 
 [tool.poetry.group.test.dependencies]
 pytest = ">=7.3.0"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
