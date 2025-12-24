@@ -10,6 +10,7 @@ from typing import List
 from .entity_map import EntityType, EntityMap
 from ..models import DfSpec, ColumnSpec, ColumnValue
 from .. import functions as PF
+from .inferred_df_spec import InferredDfSpec
     
 class InferredEntity(UserDict, ColumnValue):
     def to_dict(self):
@@ -128,7 +129,7 @@ class Analyzer:
             return UnknownEntity()
 
     def analyze_df(self, df: DataFrame) -> DfSpec:
-        df_spec = DfSpec()
+        df_spec = InferredDfSpec()
         df.cache()
 
         for field in df.schema.fields:

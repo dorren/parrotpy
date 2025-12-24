@@ -8,7 +8,6 @@ from parrotpy import functions as PF
 from parrotpy.functions.stats import normal, uniform
 from parrotpy.inference.entity_map import EntityType
 from parrotpy.inference.analyzer import Analyzer, InferredEntity
-from parrotpy.code_gen.column_code_gen import inferred2code
 
 @pytest.fixture
 def letters_df(parrot):
@@ -76,5 +75,5 @@ def test_analyze_df(parrot, sample_df):
     df_spec = parrot.analyzer().analyze_df(sample_df)
     pprint(df_spec.to_dict())
 
-    code = inferred2code(df_spec)
+    code = df_spec.to_code()
     print(code)

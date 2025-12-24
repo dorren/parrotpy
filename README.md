@@ -81,8 +81,7 @@ src_df = (
 df_spec = parrot.analyzer().analyze_df(src_df)
 
 # convert analysis result to code
-from parrotpy.code_gen.column_code_gen import inferred2code
-code = inferred2code(df_spec)
+code = df_spec.to_code()
 print(code)
 ```
 
@@ -107,8 +106,8 @@ def generate_synthetic_data(spark):
     return builder.generate(n)
 ```
 
+optional step, convert analysis result to json.
 ```python
-# optional step, convert analysis result to json.
 json_str = json.dumps(df_spec.to_dict())
 
 # generated json:

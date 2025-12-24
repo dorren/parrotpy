@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "parrotpy"
-version = "0.1.8"
+version = "0.1.9"
 description = "spark test data generation tool"
 authors = [
     {name = "Dorren Chen", email = "dorrenchen@gmail.com"}
@@ -40,7 +40,7 @@ repository = "https://github.com/dorren/parrotpy.git"
 
 [tool.poetry]
 name = "parrotpy"
-version = "0.1.8"
+version = "0.1.9"
 description = "spark test data generation tool"
 readme = "README.md"
 authors = [

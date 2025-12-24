@@ -3,12 +3,12 @@ import ast
 
 from parrotpy.models import DfSpec, ColumnSpec
 from parrotpy.inference.analyzer import InferredEntity
-from parrotpy.code_gen.column_code_gen import inferred2code, inferred2df
+from parrotpy.inference.inferred_df_spec import InferredDfSpec
 
 @pytest.fixture
-def inferred_df1() -> DfSpec:
+def inferred_df_spec_1() -> DfSpec:
 
-    return (DfSpec()
+    return (InferredDfSpec()
         .add_column(ColumnSpec(
             "name", "string", InferredEntity(entity_type="person")))
         .add_column(ColumnSpec(
@@ -17,12 +17,12 @@ def inferred_df1() -> DfSpec:
             "city", "string", InferredEntity(entity_type="choices", elements=["NYC", "London", "Paris"])))
     )
 
-def test_inferred2code(inferred_df1):
-    code = inferred2code(inferred_df1)
+def test_inferred2code(inferred_df_spec_1):
+    code = inferred_df_spec_1.to_code()
     print(code)
 
-def test_inferred2df(spark, inferred_df1):
-    df = inferred2df(spark, inferred_df1)
+def test_inferred2df(spark, inferred_df_spec_1):
+    df = inferred_df_spec_1.to_df(spark)
     assert(df.count()==100)
     df.show(10, False)
     
