@@ -13,7 +13,7 @@ clean:
 	-DEL /Q dist\*.tar.gz
 
 pkg:
-	poetry -m build .
+	python -m build .
 
 publish_test:
 	poetry publish --build --repository testpypi
