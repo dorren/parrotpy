@@ -61,10 +61,11 @@ orders_df = (
 ```
 
 
-## Analyzing Existing Data
+## Build From Existing Data
+
+Generate synthetic data by analyzing existing datasets.
 
 ```python
-# analyze existing df to generate an analysis report
 src_df = (
     parrot.df_builder()
     .build_column("uniform_nums", "double", PF.stats.uniform(min=0, max=100))
@@ -72,31 +73,10 @@ src_df = (
     .generate(1000)
 )
 
+# Analysis result
 df_spec = parrot.analyzer().analyze_df(src_df)
 
-# optional step, convert to json.
-json_str = json.dumps(df_spec.to_dict())
-
-{'columns': [
-  { 'name':        'uniform_nums',
-    'data_type':   'double',
-    'value':{
-      'entity_type': 'dist.uniform',
-      'min_value':   0.26,
-      'max_value':   99.88
-    }
-  },
-  { 'name':        'normal_nums',
-    'data_type':   'double',
-    'value': {
-      'entity_type': 'dist.normal',
-      'mean':        10.08,
-      'std_dev':     2.044
-    }
-  }
-]}
-
-# convert analysis to code
+# convert analysis result to code
 from parrotpy.code_gen.column_code_gen import inferred2code
 code = inferred2code(df_spec)
 print(code)
@@ -123,3 +103,28 @@ def generate_synthetic_data(spark):
     return builder.generate(n)
 ```
 
+```python
+# optional step, convert analysis result to json.
+json_str = json.dumps(df_spec.to_dict())
+
+# generated json:
+{'columns': [
+  { 'name':        'uniform_nums',
+    'data_type':   'double',
+    'value':{
+      'entity_type': 'dist.uniform',
+      'min_value':   0.26,
+      'max_value':   99.88
+    }
+  },
+  { 'name':        'normal_nums',
+    'data_type':   'double',
+    'value': {
+      'entity_type': 'dist.normal',
+      'mean':        10.08,
+      'std_dev':     2.044
+    }
+  }
+]}
+
+```
