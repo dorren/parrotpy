@@ -11,8 +11,8 @@ ParrotPy is a test/synthetic data generation tool for [Apache Spark](https://git
 # Scenarios
 
 * Build test data from scratch.
-* Or analyze existing data frame to generate synthetic test data from it.
-* For more customization, generate python code from eixisting dataframe analysis and make tweaks.
+* Or analyze existing dataframe to generate synthetic test data from it.
+* For more customization, generate python code from existing dataframe analysis and make tweaks.
 
 # Repository
 
